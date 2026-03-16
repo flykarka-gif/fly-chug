@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fly - מערכת ניהול חוג</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E8193C;
+    --pink: #F03E6B;
+    --yellow: #F5C518;
+    --sky: #87CEEB;
+    --sky-dark: #5BAED6;
+    --white: #FFFFFF;
+    --light: #FFF5F7;
+    --gray: #6B7280;
+    --dark: #1A1A2E;
+    --green: #22C55E;
+    --orange: #F97316;
+    --purple: #8B5CF6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    right: 0; top: 0;
+    width: 240px; height: 100vh;
+    background: linear-gradient(180deg, var(--red) 0%, #C01230 100%);
+    display: flex; flex-direction: column;
+    z-index: 100;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+  }
+
+  .logo-area {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    text-align: center;
+  }
+
+  .logo-text {
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .nav-menu {
+    flex: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 12px 20px 4px;
+    text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    border-right: 3px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+
+  .nav-item.active {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border-right-color: var(--yellow);
+    font-weight: 700;
+  }
+
+  .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .badge {
+    margin-right: auto;
+    background: var(--yellow);
+    color: var(--dark);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* MAIN */
+  .main {
+    margin-right: 240px;
+    min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: white;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #F3F4F6;
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--dark);
+  }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-primary { background: var(--red); color: white; }
+  .btn-primary:hover { background: #C01230; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,25,60,0.4); }
+
+  .btn-secondary { background: #F3F4F6; color: var(--dark); }
+  .btn-secondary:hover { background: #E5E7EB; }
+
+  .btn-yellow { background: var(--yellow); color: var(--dark); }
+  .btn-yellow:hover { background: #E6B800; transform: translateY(-1px); }
+
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* CONTENT */
+  .content { padding: 24px 28px; }
+
+  /* PAGE */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 0 16px 0 80px;
+    opacity: 0.1;
+  }
+
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.yellow::before { background: var(--yellow); }
+  .stat-card.sky::before { background: var(--sky-dark); }
+  .stat-card.green::before { background: var(--green); }
+
+  .stat-icon { font-size: 28px; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 900; color: var(--dark); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--gray); margin-top: 4px; font-weight: 500; }
+  .stat-change { font-size: 12px; font-weight: 600; margin-top: 6px; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+
+  /* CARDS */
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--dark);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: #F9FAFB;
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 700;
+    color: var(--gray);
+    font-size: 12px;
+    border-bottom: 2px solid #F3F4F6;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #F9FAFB;
+    color: var(--dark);
+    vertical-align: middle;
+  }
+
+  tr:hover td { background: #FAFAFA; }
+
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .student-info { display: flex; align-items: center; gap: 10px; }
+  .student-name { font-weight: 700; font-size: 14px; }
+  .student-meta { font-size: 11px; color: var(--gray); }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .tag-red { background: #FEE2E2; color: #DC2626; }
+  .tag-green { background: #DCFCE7; color: #16A34A; }
+  .tag-yellow { background: #FEF9C3; color: #CA8A04; }
+  .tag-blue { background: #DBEAFE; color: #2563EB; }
+  .tag-purple { background: #EDE9FE; color: #7C3AED; }
+  .tag-orange { background: #FFEDD5; color: #C2410C; }
+
+  /* ATTENDANCE */
+  .attendance-grid {
+    display: grid;
+    grid-template-columns: 200px repeat(5, 1fr);
+    gap: 0;
+    border: 1px solid #F3F4F6;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .att-header {
+    background: #F9FAFB;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--gray);
+    border-bottom: 2px solid #F3F4F6;
+    text-align: center;
+  }
+
+  .att-header:first-child { text-align: right; }
+
+  .att-cell {
+    padding: 12px 8px;
+    border-bottom: 1px solid #F9FAFB;
+    text-align: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .att-cell:first-child { text-align: right; justify-content: flex-start; padding: 12px 14px; }
+
+  .att-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid #E5E7EB;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .att-btn.present { background: var(--green); border-color: var(--green); color: white; }
+  .att-btn.absent { background: var(--red); border-color: var(--red); color: white; }
+  .att-btn.holiday { background: var(--yellow); border-color: var(--yellow); color: var(--dark); cursor: default; }
+
+  .att-btn:not(.holiday):hover { border-color: var(--red); transform: scale(1.1); }
+
+  /* PAYMENT */
+  .payment-summary {
+    background: linear-gradient(135deg, var(--red) 0%, #C01230 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    color: white;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .payment-summary h3 { font-size: 14px; opacity: 0.8; font-weight: 500; }
+  .payment-summary .amount { font-size: 36px; font-weight: 900; }
+  .payment-summary .sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+  .payment-badge {
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+
+  .debt-alert {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 10px 16px;
+    text-align: center;
+  }
+
+  .debt-alert .num { font-size: 24px; font-weight: 900; }
+  .debt-alert .lbl { font-size: 11px; opacity: 0.8; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { background: #F3F4F6; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 99px; transition: width 0.5s; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: span 2; }
+  .form-group.full3 { grid-column: span 3; }
+
+  label { font-size: 12px; font-weight: 700; color: var(--gray); }
+
+  input, select, textarea {
+    padding: 10px 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    color: var(--dark);
+    transition: border 0.2s;
+    direction: rtl;
+    background: white;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(232,25,60,0.1);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* CALENDAR */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .cal-day-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    padding: 8px 0;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 4px;
+    background: #F9FAFB;
+    min-height: 60px;
+  }
+
+  .cal-day:hover { background: #F3F4F6; }
+  .cal-day.today { background: var(--red); color: white; }
+  .cal-day.has-lesson { border: 2px solid var(--red); }
+  .cal-day.holiday { background: #FEF9C3; }
+  .cal-day.vacation { background: #DBEAFE; }
+  .cal-day.empty { background: transparent; cursor: default; }
+
+  .cal-day .heb-date { font-size: 9px; color: var(--gray); font-weight: 400; }
+  .cal-day.today .heb-date { color: rgba(255,255,255,0.7); }
+  .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-top: 2px; }
+  .cal-day.today .dot { background: white; }
+
+  /* EQUIPMENT */
+  .equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .equip-card {
+    border: 1.5px solid #F3F4F6;
+    border-radius: 14px;
+    padding: 16px;
+    transition: all 0.2s;
+  }
+
+  .equip-card:hover { border-color: var(--red); box-shadow: 0 4px 12px rgba(232,25,60,0.1); }
+  .equip-icon { font-size: 28px; margin-bottom: 8px; }
+  .equip-name { font-weight: 700; font-size: 14px; }
+  .equip-count { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .equip-status { margin-top: 8px; }
+
+  /* LESSON PLAN */
+  .lesson-card {
+    border: 1.5px solid #F3F4F6;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .lesson-card:hover { border-color: var(--red); transform: translateX(-2px); }
+  .lesson-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .lesson-card-title { font-weight: 800; font-size: 15px; }
+  .lesson-card-meta { font-size: 12px; color: var(--gray); margin-top: 3px; }
+
+  .station-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .station-tag {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  /* AI IDEAS */
+  .ai-card {
+    background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  .ai-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .ai-title { font-size: 16px; font-weight: 800; }
+  .ai-sub { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .ai-spark { font-size: 24px; }
+
+  .idea-item {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    border-right: 3px solid var(--yellow);
+  }
+
+  .idea-item strong { color: var(--yellow); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    direction: rtl;
+  }
+
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .modal-title { font-size: 20px; font-weight: 900; }
+  .modal-close { background: #F3F4F6; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: #E5E7EB; }
+
+  .modal-footer { margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #F3F4F6; padding: 4px; border-radius: 12px; }
+  .tab-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; background: transparent; font-family: 'Heebo', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--gray); transition: all 0.2s; }
+  .tab-btn.active { background: white; color: var(--red); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+  /* NOTIFICATIONS */
+  .notif {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #F9FAFB;
+  }
+
+  .notif-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .notif-text { font-size: 13px; line-height: 1.5; }
+  .notif-text strong { font-weight: 700; }
+  .notif-time { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+  /* SEARCH */
+  .search-wrap { position: relative; }
+  .search-wrap input { padding-right: 36px; }
+  .search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 14px; }
+
+  /* LOADING */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .loading { animation: pulse 1.5s infinite; }
+
+  /* AI RESPONSE */
+  .ai-response-area {
+    background: #F9FAFB;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 100px;
+    white-space: pre-wrap;
+    border: 1.5px solid #F3F4F6;
+  }
+
+  .ai-thinking { color: var(--gray); font-style: italic; }
+
+  /* DISCOUNT BADGE */
+  .discount-info { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .discount-badge { background: #DCFCE7; color: #16A34A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+  /* MONTH NAV */
+  .month-nav { display: flex; align-items: center; gap: 12px; }
+  .month-nav button { background: #F3F4F6; border: none; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .month-nav button:hover { background: #E5E7EB; }
+  .month-name { font-size: 16px; font-weight: 800; min-width: 120px; text-align: center; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--gray); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #F9FAFB; }
+  ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+  /* RESPONSIVE GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .divider { height: 1px; background: #F3F4F6; margin: 16px 0; }
+
+  .inline-edit { cursor: pointer; border-bottom: 1px dashed #D1D5DB; }
+  .inline-edit:hover { border-bottom-color: var(--red); color: var(--red); }
+
+  .fly-star { color: var(--yellow); }
+
+  /* חשוב - רוחב כרטיסי סטטיסטיקות */
+  @media (max-width: 1200px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .equip-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo-area">
+    <div class="logo-text">Fly ✈️</div>
+    <div class="logo-sub">סטודיו להתעמלות קרקע</div>
+  </div>
+  <div class="nav-menu">
+    <div class="nav-section">ראשי</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">🏠</span> לוח בקרה
+    </div>
+    <div class="nav-item" onclick="showPage('students')">
+      <span class="nav-icon">🤸</span> תלמידות
+    </div>
+    <div class="nav-section">שיעורים</div>
+    <div class="nav-item" onclick="showPage('attendance')">
+      <span class="nav-icon">✅</span> נוכחות
+    </div>
+    <div class="nav-item" onclick="showPage('calendar')">
+      <span class="nav-icon">📅</span> לוח שנה
+    </div>
+    <div class="nav-item" onclick="showPage('lessons')">
+      <span class="nav-icon">📝</span> מערכי שיעור
+    </div>
+    <div class="nav-section">כספים</div>
+    <div class="nav-item" onclick="showPage('payments')">
+      <span class="nav-icon">💰</span> תשלומים
+      <span class="badge">3</span>
+    </div>
+    <div class="nav-section">ניהול</div>
+    <div class="nav-item" onclick="showPage('equipment')">
+      <span class="nav-icon">🤸‍♀️</span> ציוד ותחנות
+    </div>
+    <div class="nav-item" onclick="showPage('progress')">
+      <span class="nav-icon">⭐</span> התקדמות
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="nav-icon">📊</span> דוחות
+    </div>
+    <div class="nav-item" onclick="showPage('ai')">
+      <span class="nav-icon">🤖</span> עוזרת AI
+    </div>
+    <div class="nav-section">מערכת</div>
+    <div class="nav-item" onclick="showPage('history')">
+      <span class="nav-icon">🕐</span> היסטוריית שינויים
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">⚙️</span> הגדרות
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">לוח בקרה 🏠</div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportData()">📤 ייצוא</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addStudentModal')">+ תלמידה חדשה</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card red">
+          <div class="stat-icon">🤸</div>
+          <div class="stat-value" id="totalStudents">0</div>
+          <div class="stat-label">תלמידות פעילות</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">₪<span id="monthIncome">0</span></div>
+          <div class="stat-label">הכנסה — <span id="currentMonthName"></span></div>
+        </div>
+        <div class="stat-card sky">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value"><span id="attendanceRate">0</span>%</div>
+          <div class="stat-label">אחוז נוכחות — השבוע</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="debtCount">0</div>
+          <div class="stat-label">חייבות תשלום</div>
+          <div class="stat-change down" id="debtAlert" style="display:none;">לטיפול</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔔 התראות ותזכורות</div>
+          </div>
+          <div id="notifsList">
+            <div style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">
+              <div style="font-size:32px;margin-bottom:8px;">🔔</div>
+              אין התראות כרגע
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 נוכחות לפי קבוצה</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:13px;font-weight:700;">מתחילות (5–8)</span>
+                <span style="font-size:13px;color:var(--gray);">8/9 · 89%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar" style="width:89%;background:var(--green);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:13px;font-weight:700;">בינוניות (9–12)</span>
+                <span style="font-size:13px;color:var(--gray);">7/8 · 88%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar" style="width:88%;background:var(--sky-dark);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:13px;font-weight:700;">מתקדמות (13–16)</span>
+                <span style="font-size:13px;color:var(--gray);">6/7 · 86%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar" style="width:86%;background:var(--yellow);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:13px;font-weight:700;">בוגרות (17+)</span>
+                <span style="font-size:13px;color:var(--gray);">5/6 · 83%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar" style="width:83%;background:var(--orange);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌟 כוכבות השבוע</div>
+          <button class="btn btn-yellow btn-sm" onclick="openModal('addStarModal')">+ הוסף כוכבת</button>
+        </div>
+        <div id="starsGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div style="text-align:center;padding:20px;background:#F9FAFB;border-radius:12px;color:var(--gray);">
+            <div style="font-size:32px;margin-bottom:8px;">🌟</div>
+            <div style="font-size:12px;">עוד לא הוספת<br>כוכבות השבוע</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="page" id="page-students">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤸 רשימת תלמידות</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="חיפוש תלמידה..." style="width:200px;font-size:13px;" oninput="filterStudents(this.value)">
+            </div>
+            <select style="font-size:13px;padding:8px 12px;" onchange="filterByGroup(this.value)">
+              <option value="">כל הקבוצות</option>
+              <option>מתחילות (5–8)</option>
+              <option>בינוניות (9–12)</option>
+              <option>מתקדמות (13–16)</option>
+              <option>בוגרות (17+)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addStudentModal')">+ הוספה</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="studentsTable">
+            <thead>
+              <tr>
+                <th>תלמידה</th>
+                <th>קבוצה</th>
+                <th>גיל</th>
+                <th>הורה / טלפון</th>
+                <th>מחיר לשיעור</th>
+                <th>הנחה</th>
+                <th>סטטוס תשלום</th>
+                <th>פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✅ סימון נוכחות</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="month-nav">
+              <button onclick="prevWeek()">›</button>
+              <div class="month-name" id="attendanceWeekLabel">שבוע 16–10 במרץ</div>
+              <button onclick="nextWeek()">‹</button>
+            </div>
+            <select style="font-size:13px;padding:8px 12px;">
+              <option>כל הקבוצות</option>
+              <option>מתחילות (5–8)</option>
+              <option>בינוניות (9–12)</option>
+              <option>מתקדמות (13–16)</option>
+              <option>בוגרות (17+)</option>
+            </select>
+          </div>
+        </div>
+        <div class="attendance-grid" id="attendanceGrid">
+        </div>
+        <div style="margin-top:16px;display:flex;gap:16px;align-items:center;font-size:12px;color:var(--gray);">
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--green);border-radius:50%;vertical-align:middle;margin-left:4px;"></span>נוכחת</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--red);border-radius:50%;vertical-align:middle;margin-left:4px;"></span>חסרה (לא תחויב)</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--yellow);border-radius:50%;vertical-align:middle;margin-left:4px;"></span>חג / חופשה</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📅 לוח שנה</div>
+          <div class="month-nav">
+            <button onclick="prevMonth()">›</button>
+            <div class="month-name" id="calMonthLabel">מרץ 2025</div>
+            <button onclick="nextMonth()">‹</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid">
+        </div>
+        <div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;">
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:var(--red);border-radius:4px;display:inline-block;"></span> שיעור</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:#FEF9C3;border:1px solid #EAB308;border-radius:4px;display:inline-block;"></span> חג</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:#DBEAFE;border:1px solid #3B82F6;border-radius:4px;display:inline-block;"></span> חופשה</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🕍 ימים מיוחדים — <span id="calMonthLabel2">מרץ 2025</span></div>
+        </div>
+        <div id="specialDaysList" style="display:flex;flex-direction:column;gap:8px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="page" id="page-lessons">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'lessons-library')">📚 ספריית מערכים</button>
+        <button class="tab-btn" onclick="switchTab(this,'lessons-create')">✏️ צור מערך חדש</button>
+        <button class="tab-btn" onclick="switchTab(this,'lessons-stations')">🏋️ רעיונות תחנות</button>
+      </div>
+
+      <div id="tab-lessons-library">
+        <div id="lessonsList"></div>
+      </div>
+
+      <div id="tab-lessons-create" style="display:none;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:20px;">✏️ מערך שיעור חדש</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>שם המערך</label>
+              <input type="text" placeholder="לדוג׳: גמישות ואקרובטיקה — מתחילות">
+            </div>
+            <div class="form-group">
+              <label>קבוצת יעד</label>
+              <select><option>מתחילות</option><option>בינוניות</option><option>מתקדמות</option><option>כולן</option></select>
+            </div>
+            <div class="form-group">
+              <label>משך השיעור (דקות)</label>
+              <input type="number" value="60">
+            </div>
+            <div class="form-group">
+              <label>רמת קושי</label>
+              <select><option>קל</option><option>בינוני</option><option>מאתגר</option></select>
+            </div>
+            <div class="form-group full">
+              <label>חימום (10 דקות)</label>
+              <textarea placeholder="תאר את פעילויות החימום..."></textarea>
+            </div>
+            <div class="form-group full">
+              <label>תחנות (מלא לפי סדר)</label>
+              <div id="stationsInput">
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                  <input type="text" placeholder="תחנה 1" style="flex:1;">
+                  <input type="text" placeholder="ציוד נדרש" style="width:160px;">
+                  <input type="number" placeholder="דקות" style="width:70px;">
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                  <input type="text" placeholder="תחנה 2" style="flex:1;">
+                  <input type="text" placeholder="ציוד נדרש" style="width:160px;">
+                  <input type="number" placeholder="דקות" style="width:70px;">
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                  <input type="text" placeholder="תחנה 3" style="flex:1;">
+                  <input type="text" placeholder="ציוד נדרש" style="width:160px;">
+                  <input type="number" placeholder="דקות" style="width:70px;">
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="addStation()" style="margin-top:4px;">+ תחנה נוספת</button>
+            </div>
+            <div class="form-group full">
+              <label>קירור וסיום</label>
+              <textarea placeholder="פעילויות קירור..."></textarea>
+            </div>
+            <div class="form-group full">
+              <label>הערות מיוחדות</label>
+              <textarea placeholder="הערות, שינויים לתלמידות ספציפיות..."></textarea>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;">
+            <button class="btn btn-primary">💾 שמור מערך</button>
+            <button class="btn btn-yellow" onclick="generateAILesson()">🤖 הצע תחנות בעזרת AI</button>
+          </div>
+          <div id="aiLessonSuggestion" style="display:none;margin-top:16px;">
+            <div class="ai-card">
+              <div class="ai-card-header">
+                <span class="ai-spark">✨</span>
+                <div><div class="ai-title">הצעות תחנות מ-AI</div></div>
+              </div>
+              <div id="aiLessonText" class="ai-response-area"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-lessons-stations" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏋️ בנק רעיונות לתחנות</div>
+            <button class="btn btn-yellow btn-sm" onclick="generateStationIdeas()">🤖 רעיונות חדשים מ-AI</button>
+          </div>
+          <div class="grid-3" id="stationsBank">
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🤸</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">גלגל קדמי</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">מזרן · 5–8 דקות</div>
+              <span class="tag tag-green">מתחילות</span>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🌉</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">גשר</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">מזרן + קצף · 8 דקות</div>
+              <span class="tag tag-blue">בינוניות</span>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🤸‍♀️</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">עמידת ידיים</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">קיר + מזרן · 10 דקות</div>
+              <span class="tag tag-purple">מתקדמות</span>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🧘</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">גמישות גב</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">מזרן · 10 דקות</div>
+              <span class="tag tag-yellow">כולן</span>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🎯</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">קפיצות על טרמפולינה</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">טרמפולינה · 8 דקות</div>
+              <span class="tag tag-orange">בינוניות+</span>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="font-size:24px;margin-bottom:8px;">🏃</div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;">ריצת מכשולים</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">רצועות + חישוקים · 10 דקות</div>
+              <span class="tag tag-green">כולן</span>
+            </div>
+          </div>
+          <div id="aiStationsResult" style="display:none;margin-top:16px;">
+            <div class="ai-card">
+              <div class="ai-card-header">
+                <span class="ai-spark">✨</span>
+                <div class="ai-title">רעיונות חדשים</div>
+              </div>
+              <div id="aiStationsText" class="ai-response-area"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <div class="payment-summary">
+        <div>
+          <h3 id="payMonthLabel">סה"כ הכנסה — החודש</h3>
+          <div class="amount">₪<span id="payTotalIncome">0</span></div>
+          <div class="sub" id="paySubLabel">טוען...</div>
+        </div>
+        <div style="display:flex;gap:16px;">
+          <div class="debt-alert">
+            <div class="num">₪<span id="payOpenDebt">0</span></div>
+            <div class="lbl">חוב פתוח</div>
+          </div>
+          <div class="debt-alert">
+            <div class="num" id="payDebtCount">0</div>
+            <div class="lbl">תלמידות חייבות</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 מצב תשלומים — מרץ 2025</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="sendReminders()">📱 שלח תזכורות</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addPaymentModal')">+ רשום תשלום</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="paymentsTable">
+            <thead>
+              <tr>
+                <th>תלמידה</th>
+                <th>קבוצה</th>
+                <th>שיעורים שנכחה</th>
+                <th>מחיר לשיעור</th>
+                <th>הנחה</th>
+                <th>לתשלום</th>
+                <th>שולם</th>
+                <th>יתרה</th>
+                <th>אמצעי</th>
+                <th>סטטוס</th>
+                <th>פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="paymentsBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div class="page" id="page-equipment">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'equip-list')">🤸‍♀️ רשימת ציוד</button>
+        <button class="tab-btn" onclick="switchTab(this,'equip-stations')">🏋️ תחנות לפי ציוד</button>
+      </div>
+
+      <div id="tab-equip-list">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🤸‍♀️ ניהול ציוד</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addEquipModal')">+ ציוד חדש</button>
+          </div>
+          <div class="equip-grid" id="equipGrid">
+            <div class="equip-card">
+              <div class="equip-icon">🟦</div>
+              <div class="equip-name">Air Floor</div>
+              <div class="equip-count">1 יחידה</div>
+              <div class="equip-status"><span class="tag tag-green">תקין</span></div>
+            </div>
+            <div class="equip-card">
+              <div class="equip-icon">🔺</div>
+              <div class="equip-name">Wedge Mats (קילופ)</div>
+              <div class="equip-count">2 יחידות</div>
+              <div class="equip-status"><span class="tag tag-green">תקין</span></div>
+            </div>
+            <div class="equip-card">
+              <div class="equip-icon">🟫</div>
+              <div class="equip-name">Foam Blocks</div>
+              <div class="equip-count">4 יחידות</div>
+              <div class="equip-status"><span class="tag tag-yellow">בדיקה נדרשת</span></div>
+            </div>
+            <div class="equip-card">
+              <div class="equip-icon">⚖️</div>
+              <div class="equip-name">Balance Beams</div>
+              <div class="equip-count">2 יחידות</div>
+              <div class="equip-status"><span class="tag tag-green">תקין</span></div>
+            </div>
+            <div class="equip-card">
+              <div class="equip-icon">🟩</div>
+              <div class="equip-name">מזרנים</div>
+              <div class="equip-count">8 יחידות</div>
+              <div class="equip-status"><span class="tag tag-green">תקין</span></div>
+            </div>
+            <div class="equip-card">
+              <div class="equip-icon">🔵</div>
+              <div class="equip-name">כדורים רגילים</div>
+              <div class="equip-count">6 יחידות</div>
+              <div class="equip-status"><span class="tag tag-red">חסר — לרכוש</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-equip-stations" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏋️ תחנות לפי ציוד זמין</div>
+            <button class="btn btn-yellow btn-sm" onclick="generateEquipIdeas()">🤖 רעיונות מ-AI</button>
+          </div>
+          <div id="aiEquipResult"></div>
+          <div style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">לחץ על "רעיונות מ-AI" לקבלת הצעות תחנות לפי הציוד שיש לך 🤸</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="page" id="page-progress">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⭐ מעקב התקדמות תלמידות</div>
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="חיפוש תלמידה..." style="width:200px;font-size:13px;">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>תלמידה</th>
+                <th>קבוצה</th>
+                <th>גלגל קדמי</th>
+                <th>גשר</th>
+                <th>עמידת ידיים</th>
+                <th>גמישות גב</th>
+                <th>פעלולים</th>
+                <th>הערות מדריכה</th>
+                <th>עדכון</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="student-info"><div class="avatar" style="background:var(--red);">נ</div><div><div class="student-name">נועה שפירא</div></div></div></td>
+                <td><span class="tag tag-purple">מתקדמות</span></td>
+                <td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐</td>
+                <td style="font-size:12px;max-width:150px;">מוכנה לסלטות מתקדמות</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="openProgressModal('נועה שפירא')">✏️</button></td>
+              </tr>
+              <tr>
+                <td><div class="student-info"><div class="avatar" style="background:var(--sky-dark);">ת</div><div><div class="student-name">תמר כץ</div></div></div></td>
+                <td><span class="tag tag-blue">בינוניות</span></td>
+                <td>⭐⭐⭐</td><td>⭐⭐</td><td>⭐</td><td>⭐⭐⭐</td><td>⭐</td>
+                <td style="font-size:12px;max-width:150px;">לעבוד על כוח ידיים</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="openProgressModal('תמר כץ')">✏️</button></td>
+              </tr>
+              <tr>
+                <td><div class="student-info"><div class="avatar" style="background:var(--green);">ל</div><div><div class="student-name">ליאת מזרחי</div></div></div></td>
+                <td><span class="tag tag-green">מתחילות</span></td>
+                <td>⭐⭐</td><td>⭐</td><td>⭐</td><td>⭐⭐</td><td>⭐</td>
+                <td style="font-size:12px;max-width:150px;">התקדמות מהירה! מוטיבציה גבוהה</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="openProgressModal('ליאת מזרחי')">✏️</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤖 ניתוח תלמידה + המלצות AI</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:16px;">
+          <select style="flex:1;font-size:13px;padding:10px 14px;">
+            <option>בחר תלמידה...</option>
+            <option>נועה שפירא</option>
+            <option>תמר כץ</option>
+            <option>ליאת מזרחי</option>
+          </select>
+          <button class="btn btn-yellow" onclick="analyzeStudent()">🤖 נתח והמלץ</button>
+        </div>
+        <div id="studentAnalysis" class="ai-response-area ai-thinking">בחרי תלמידה ולחצי על "נתח והמלץ" לקבלת ניתוח מותאם אישית...</div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="stats-grid">
+        <div class="stat-card red">
+          <div class="stat-icon">📆</div>
+          <div class="stat-value">₪2,840</div>
+          <div class="stat-label">הכנסה — מרץ</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">₪31,200</div>
+          <div class="stat-label">הכנסה שנתית (חיזוי)</div>
+        </div>
+        <div class="stat-card sky">
+          <div class="stat-icon">✂️</div>
+          <div class="stat-value">₪480</div>
+          <div class="stat-label">הנחות החודש</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">24</div>
+          <div class="stat-label">תלמידות פעילות</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">📊 הכנסה לפי חודש</div>
+          <div style="display:flex;flex-direction:column;gap:10px;" id="monthlyChart">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">🥧 פילוח הנחות</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">הנחת אחיות</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:100px;" class="progress-bar-wrap"><div class="progress-bar" style="width:45%;background:var(--red);"></div></div>
+                <span style="font-size:12px;color:var(--gray);">5 תלמידות</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">הנחת חברות</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:100px;" class="progress-bar-wrap"><div class="progress-bar" style="width:27%;background:var(--yellow);"></div></div>
+                <span style="font-size:12px;color:var(--gray);">3 תלמידות</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">ילד שני</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:100px;" class="progress-bar-wrap"><div class="progress-bar" style="width:18%;background:var(--sky-dark);"></div></div>
+                <span style="font-size:12px;color:var(--gray);">2 תלמידות</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">הסכם אישי</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:100px;" class="progress-bar-wrap"><div class="progress-bar" style="width:9%;background:var(--purple);"></div></div>
+                <span style="font-size:12px;color:var(--gray);">1 תלמידה</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📤 ייצוא דוחות</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="exportReport('excel','students')">📊 ייצוא תלמידות לאקסל</button>
+          <button class="btn btn-secondary" onclick="exportReport('pdf','payments')">📄 דוח תשלומים PDF</button>
+          <button class="btn btn-secondary" onclick="exportReport('excel','payments')">📊 תשלומים לאקסל</button>
+          <button class="btn btn-secondary" onclick="exportReport('pdf','attendance')">📄 דוח נוכחות PDF</button>
+          <button class="btn btn-primary" onclick="exportReport('pdf','monthly')">📄 סיכום חודשי מלא</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI PAGE -->
+    <div class="page" id="page-ai">
+      <div class="ai-card">
+        <div class="ai-card-header">
+          <span class="ai-spark">🤖</span>
+          <div>
+            <div class="ai-title">עוזרת AI — Fly Assistant</div>
+            <div class="ai-sub">שאלי אותי כל שאלה על החוג, תלמידות, שיעורים ורעיונות</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="aiQuestion" placeholder="לדוג׳: תני לי רעיונות לשיעור גמישות למתחילות..." style="flex:1;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white;" onkeydown="if(event.key==='Enter')askAI()">
+          <button class="btn btn-yellow" onclick="askAI()">שאל ✨</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💡 שאלות מהירות</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+          <button class="btn btn-secondary btn-sm" onclick="quickAsk('תני לי 5 רעיונות לתחנות גמישות')">🧘 רעיונות גמישות</button>
+          <button class="btn btn-secondary btn-sm" onclick="quickAsk('מה כדאי לעשות בשיעור הראשון עם קבוצת מתחילות חדשה?')">🌟 שיעור ראשון</button>
+          <button class="btn btn-secondary btn-sm" onclick="quickAsk('תני לי תרגילי חימום מהנים לילדות בגיל 5-8')">🔥 חימום לילדות</button>
+          <button class="btn btn-secondary btn-sm" onclick="quickAsk('איך לעודד תלמידה שמרגישה תקועה ולא מתקדמת?')">💪 עידוד תלמידה</button>
+          <button class="btn btn-secondary btn-sm" onclick="quickAsk('תני לי רעיונות לאירוע הופעה סוף שנה')">🎪 הופעת סוף שנה</button>
+        </div>
+        <div id="aiMainResponse" class="ai-response-area ai-thinking">שאלי אותי כל דבר הקשור לחוג ✨</div>
+      </div>
+
+      <!-- AFTER LESSON SUMMARY -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 סיכום שיעור + המלצות</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>תאריך השיעור</label>
+            <input type="date" id="lessonDate">
+          </div>
+          <div class="form-group">
+            <label>קבוצה</label>
+            <select id="lessonGroup"><option>מתחילות</option><option>בינוניות</option><option>מתקדמות</option><option>בוגרות</option></select>
+          </div>
+          <div class="form-group full">
+            <label>מה עשינו בשיעור?</label>
+            <textarea id="lessonContent" placeholder="תארי בקצרה מה עשיתם, אילו תחנות, מה עבד טוב..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>הצלחות ואתגרים</label>
+            <textarea id="lessonChallenges" placeholder="מה הלך טוב? מה היה מאתגר? תלמידות שצריכות תשומת לב מיוחדת?"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-yellow" style="margin-top:12px;" onclick="generateLessonSummary()">🤖 קבלי ניתוח + רעיונות לשיעור הבא</button>
+        <div id="lessonSummaryResult" style="display:none;margin-top:16px;">
+          <div class="ai-card">
+            <div class="ai-card-header">
+              <span class="ai-spark">✨</span>
+              <div class="ai-title">ניתוח ורעיונות לשיעור הבא</div>
+            </div>
+            <div id="lessonSummaryText" class="ai-response-area"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🕐 היסטוריית שינויים</div>
+          <button class="btn btn-secondary btn-sm" onclick="exportHistory()">📤 ייצוא</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>תאריך ושעה</th>
+              <th>פעולה</th>
+              <th>פרטים</th>
+              <th>ערך לפני</th>
+              <th>ערך אחרי</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:20px;">⚙️ הגדרות חוג</div>
+          <div class="form-grid" style="grid-template-columns:1fr;">
+            <div class="form-group">
+              <label>שם החוג</label>
+              <input type="text" value="Fly — סטודיו להתעמלות קרקע">
+            </div>
+            <div class="form-group">
+              <label>יום השיעור הקבוע</label>
+              <select><option>ראשון</option><option>שני</option><option>שלישי</option><option selected>רביעי</option><option>חמישי</option><option>שישי</option></select>
+            </div>
+            <div class="form-group">
+              <label>שעת השיעור</label>
+              <input type="time" value="17:00">
+            </div>
+            <div class="form-group">
+              <label>טלפון ליצירת קשר</label>
+              <input type="tel" value="055-676-1498">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px;">💾 שמור</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:20px;">💸 הגדרות מחירים והנחות</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#F9FAFB;border-radius:10px;">
+              <span style="font-weight:700;font-size:13px;">מתחילות (5–8)</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:var(--gray);">₪ לשיעור:</span>
+                <input type="number" value="55" style="width:70px;text-align:center;padding:6px;">
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#F9FAFB;border-radius:10px;">
+              <span style="font-weight:700;font-size:13px;">בינוניות (9–12)</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:var(--gray);">₪ לשיעור:</span>
+                <input type="number" value="60" style="width:70px;text-align:center;padding:6px;">
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#F9FAFB;border-radius:10px;">
+              <span style="font-weight:700;font-size:13px;">מתקדמות (13–16)</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:var(--gray);">₪ לשיעור:</span>
+                <input type="number" value="65" style="width:70px;text-align:center;padding:6px;">
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#F9FAFB;border-radius:10px;">
+              <span style="font-weight:700;font-size:13px;">בוגרות (17+)</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:var(--gray);">₪ לשיעור:</span>
+                <input type="number" value="70" style="width:70px;text-align:center;padding:6px;">
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">הנחות</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">הנחת אחיות</span>
+              <div style="display:flex;align-items:center;gap:4px;"><input type="number" value="15" style="width:60px;text-align:center;padding:6px;"><span style="font-size:13px;">%</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">ילד שני (אותה משפחה)</span>
+              <div style="display:flex;align-items:center;gap:4px;"><input type="number" value="10" style="width:60px;text-align:center;padding:6px;"><span style="font-size:13px;">%</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;">הנחת חברות</span>
+              <div style="display:flex;align-items:center;gap:4px;"><input type="number" value="10" style="width:60px;text-align:center;padding:6px;"><span style="font-size:13px;">%</span></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px;">💾 שמור הגדרות</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🤸 הוספת תלמידה חדשה</div>
+      <button class="modal-close" onclick="closeModal('addStudentModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>שם פרטי</label><input type="text" id="newStudentFirst" placeholder="שם פרטי"></div>
+      <div class="form-group"><label>שם משפחה</label><input type="text" id="newStudentLast" placeholder="שם משפחה"></div>
+      <div class="form-group"><label>גיל</label><input type="number" id="newStudentAge" placeholder="גיל"></div>
+      <div class="form-group"><label>קבוצה</label>
+        <select id="newStudentGroup">
+          <option>מתחילות (5–8)</option>
+          <option>בינוניות (9–12)</option>
+          <option>מתקדמות (13–16)</option>
+          <option>בוגרות (17+)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>שם הורה</label><input type="text" id="newParentName" placeholder="שם ההורה"></div>
+      <div class="form-group"><label>טלפון הורה</label><input type="tel" id="newParentPhone" placeholder="050-0000000"></div>
+      <div class="form-group"><label>הנחה</label>
+        <select id="newStudentDiscount">
+          <option value="none">ללא הנחה</option>
+          <option value="sisters">הנחת אחיות (15%)</option>
+          <option value="second">ילד שני (10%)</option>
+          <option value="friend">הנחת חברות (10%)</option>
+          <option value="custom">הסכם אישי</option>
+        </select>
+      </div>
+      <div class="form-group"><label>% הנחה (אם הסכם אישי)</label><input type="number" id="newDiscountAmount" placeholder="0"></div>
+      <div class="form-group full"><label>הערות</label><textarea id="newStudentNotes" placeholder="הערות מיוחדות..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addStudentModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="addStudent()">✓ הוספה</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addPaymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💰 רישום תשלום</div>
+      <button class="modal-close" onclick="closeModal('addPaymentModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>תלמידה</label>
+        <select id="paymentStudent"><option>בחר תלמידה...</option></select>
+      </div>
+      <div class="form-group"><label>סכום ששולם (₪)</label><input type="number" id="paymentAmount" placeholder="0"></div>
+      <div class="form-group"><label>אמצעי תשלום</label>
+        <select id="paymentMethod"><option>מזומן</option><option>העברה בנקאית</option></select>
+      </div>
+      <div class="form-group"><label>תאריך תשלום</label><input type="date" id="paymentDate"></div>
+      <div class="form-group"><label>הערה</label><input type="text" id="paymentNote" placeholder="אופציונלי"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addPaymentModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="recordPayment()">✓ רשום</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addEquipModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🤸‍♀️ הוספת ציוד</div>
+      <button class="modal-close" onclick="closeModal('addEquipModal')">✕</button>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>שם הציוד</label><input type="text" placeholder="שם הציוד"></div>
+      <div class="form-group"><label>כמות</label><input type="number" value="1"></div>
+      <div class="form-group"><label>סטטוס</label>
+        <select><option>תקין</option><option>בדיקה נדרשת</option><option>לתיקון</option><option>חסר — לרכוש</option></select>
+      </div>
+      <div class="form-group"><label>הערות</label><textarea placeholder="הערות..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addEquipModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="closeModal('addEquipModal');showToast('הציוד נוסף ✓')">✓ הוספה</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark);color:white;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;transition:transform 0.3s;"></div>
+
+<script>
+// ===== SUPABASE CONFIG =====
+const SUPABASE_URL = 'https://mcbnwncrqyhsekbezbmx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CVEfhJ3ngh7qk1hd6O4xyQ_MCByVbvE';
+
+async function sbFetch(path, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': options.prefer || 'return=representation',
+    ...options.headers
+  };
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase error: ${err}`);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function dbSelect(table, query = '') {
+  return sbFetch(`${table}?${query}&order=id`);
+}
+
+async function dbInsert(table, data) {
+  return sbFetch(table, { method: 'POST', body: JSON.stringify(data) });
+}
+
+async function dbUpdate(table, id, data) {
+  return sbFetch(`${table}?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+}
+
+async function dbDelete(table, id) {
+  return sbFetch(`${table}?id=eq.${id}`, { method: 'DELETE', prefer: 'return=minimal' });
+}
+
+// ===== INIT TABLES =====
+async function initDB() {
+  // Create tables via RPC if they don't exist — we use a simple check approach
+  // Tables needed: students, attendance_records, payments, history_log, lesson_plans, equipment
+  try {
+    await dbSelect('students', 'limit=1');
+  } catch(e) {
+    showToast('⚠️ צריך להגדיר טבלאות — ראי הוראות למטה');
+    showSetupInstructions();
+  }
+}
+
+function showSetupInstructions() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:32px;max-width:600px;width:90%;direction:rtl;max-height:80vh;overflow-y:auto;">
+      <div style="font-size:28px;font-weight:900;color:#E8193C;margin-bottom:8px;">⚙️ הגדרה ראשונית</div>
+      <div style="font-size:14px;color:#6B7280;margin-bottom:20px;">צריך ליצור את הטבלאות בסופאבייס פעם אחת בלבד</div>
+      <div style="font-size:13px;margin-bottom:16px;line-height:1.8;">
+        <strong>1.</strong> לכי לـ <a href="https://supabase.com/dashboard/project/mcbnwncrqyhsekbezbmx/sql" target="_blank" style="color:#E8193C;">Supabase SQL Editor</a><br>
+        <strong>2.</strong> העתיקי את הקוד הבא והריצי אותו:
+      </div>
+      <textarea readonly style="width:100%;height:280px;font-size:11px;font-family:monospace;padding:12px;border:1.5px solid #E5E7EB;border-radius:10px;direction:ltr;background:#F9FAFB;" onclick="this.select()">
+create table if not exists students (
+  id bigint generated always as identity primary key,
+  first text not null,
+  last text not null,
+  age int,
+  student_group text,
+  parent text,
+  phone text,
+  discount text default 'none',
+  discount_custom int default 0,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists attendance_records (
+  id bigint generated always as identity primary key,
+  student_id bigint references students(id) on delete cascade,
+  lesson_date date not null,
+  present boolean default false,
+  created_at timestamptz default now(),
+  unique(student_id, lesson_date)
+);
+
+create table if not exists payments (
+  id bigint generated always as identity primary key,
+  student_id bigint references students(id) on delete cascade,
+  month_year text not null,
+  lessons_attended int default 0,
+  amount_due numeric default 0,
+  amount_paid numeric default 0,
+  method text,
+  paid boolean default false,
+  paid_date date,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists history_log (
+  id bigint generated always as identity primary key,
+  action text,
+  details text,
+  before_val text,
+  after_val text,
+  created_at timestamptz default now()
+);
+
+create table if not exists lesson_plans (
+  id bigint generated always as identity primary key,
+  title text,
+  student_group text,
+  duration int,
+  difficulty text,
+  warmup text,
+  stations jsonb,
+  cooldown text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists equipment (
+  id bigint generated always as identity primary key,
+  name text,
+  quantity int default 1,
+  status text default 'תקין',
+  notes text,
+  created_at timestamptz default now()
+);
+
+alter table students disable row level security;
+alter table attendance_records disable row level security;
+alter table payments disable row level security;
+alter table history_log disable row level security;
+alter table lesson_plans disable row level security;
+alter table equipment disable row level security;
+      </textarea>
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='הועתק ✓'" style="padding:10px 20px;background:#E8193C;color:white;border:none;border-radius:10px;font-family:Heebo,sans-serif;font-weight:700;cursor:pointer;">📋 העתק SQL</button>
+        <button onclick="this.closest('div[style*=fixed]').remove();location.reload();" style="padding:10px 20px;background:#22C55E;color:white;border:none;border-radius:10px;font-family:Heebo,sans-serif;font-weight:700;cursor:pointer;">✓ הרצתי, המשך!</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ===== DATA =====
+const PRICES = { 'מתחילות (5–8)': 55, 'בינוניות (9–12)': 60, 'מתקדמות (13–16)': 65, 'בוגרות (17+)': 70 };
+const DISCOUNTS = { 'none': 0, 'sisters': 15, 'second': 10, 'friend': 10, 'custom': 0 };
+const DISCOUNT_LABELS = { 'none': '—', 'sisters': 'אחיות 15%', 'second': 'ילד שני 10%', 'friend': 'חברות 10%', 'custom': 'הסכם אישי' };
+const AVATAR_COLORS = ['#E8193C','#5BAED6','#22C55E','#F97316','#8B5CF6','#F5C518','#E05CB0','#14B8A6'];
+
+let students = [];
+
+// Map DB row -> app object
+function mapStudent(row) {
+  return {
+    id: row.id,
+    first: row.first,
+    last: row.last,
+    age: row.age || 0,
+    group: row.student_group || '',
+    parent: row.parent || '',
+    phone: row.phone || '',
+    discount: row.discount || 'none',
+    discountCustom: row.discount_custom || 0,
+    notes: row.notes || '',
+    attendance: [],
+    paid: false,
+    paidAmount: 0
+  };
+}
+
+async function loadStudents() {
+  try {
+    const rows = await dbSelect('students');
+    students = rows.map(mapStudent);
+    // load current month attendance & payments
+    const monthYear = getCurrentMonthYear();
+    const attRows = await dbSelect('attendance_records', `lesson_date=gte.${getMonthStart()}&lesson_date=lte.${getMonthEnd()}`);
+    const payRows = await dbSelect('payments', `month_year=eq.${monthYear}`);
+    students.forEach(s => {
+      const sAtt = attRows.filter(a => a.student_id === s.id);
+      s.attendance = sAtt.map(a => a.present);
+      const pay = payRows.find(p => p.student_id === s.id);
+      s.paid = pay ? pay.paid : false;
+      s.paidAmount = pay ? (pay.amount_paid || 0) : 0;
+    });
+    return students;
+  } catch(e) {
+    console.error('loadStudents error:', e);
+    return [];
+  }
+}
+
+function getCurrentMonthYear() {
+  const now = new Date();
+  return `${now.getMonth()+1}/${now.getFullYear()}`;
+}
+
+function getMonthStart() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+}
+
+function getMonthEnd() {
+  const now = new Date();
+  const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  return `${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`;
+}
+
+const WEEK_DATES = ['10/3','11/3','12/3','13/3','14/3'];
+const WEEK_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי'];
+const HEB_MONTHS = ['תשרי','חשון','כסלו','טבת','שבט','אדר','ניסן','אייר','סיון','תמוז','אב','אלול'];
+const HOLIDAYS = {
+  '14/4':'פסח','15/4':'פסח','16/4':'פסח','17/4':'פסח','18/4':'פסח','19/4':'פסח','20/4':'פסח','21/4':'פסח',
+  '2/6':'שבועות','3/6':'שבועות',
+  '3/10':'ר"ה','4/10':'ר"ה','12/10':'יוה"כ','17/10':'סוכות','24/10':'שמח"ת'
+};
+
+let historyLog = [];
+
+// ===== NAVIGATION =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + name + "'")) n.classList.add('active');
+  });
+  const titles = { dashboard:'לוח בקרה 🏠', students:'תלמידות 🤸', attendance:'נוכחות ✅', calendar:'לוח שנה 📅', lessons:'מערכי שיעור 📝', payments:'תשלומים 💰', equipment:'ציוד ותחנות 🤸‍♀️', progress:'התקדמות ⭐', reports:'דוחות 📊', ai:'עוזרת AI 🤖', history:'היסטוריית שינויים 🕐', settings:'הגדרות ⚙️' };
+  document.getElementById('pageTitle').textContent = titles[name] || name;
+  if (name === 'students') renderStudents();
+  if (name === 'payments') renderPayments();
+  if (name === 'attendance') renderAttendance();
+  if (name === 'calendar') renderCalendar();
+  if (name === 'lessons') renderLessons();
+  if (name === 'reports') renderMonthlyChart();
+}
+
+// ===== STUDENTS =====
+function getStudentColor(idx) { return AVATAR_COLORS[idx % AVATAR_COLORS.length]; }
+
+function calcPayment(s) {
+  const price = PRICES[s.group] || 60;
+  const attended = s.attendance.filter(Boolean).length;
+  const discPct = s.discount === 'custom' ? s.discountCustom : (DISCOUNTS[s.discount] || 0);
+  const base = attended * price;
+  const disc = Math.round(base * discPct / 100);
+  return { price, attended, base, disc, total: base - disc };
+}
+
+function renderStudents(filter='', groupFilter='') {
+  const tbody = document.getElementById('studentsBody');
+  const filtered = students.filter(s => {
+    const name = s.first + ' ' + s.last;
+    const matchName = !filter || name.includes(filter);
+    const matchGroup = !groupFilter || s.group === groupFilter;
+    return matchName && matchGroup;
+  });
+  tbody.innerHTML = filtered.map((s, i) => {
+    const pay = calcPayment(s);
+    return `<tr>
+      <td><div class="student-info">
+        <div class="avatar" style="background:${getStudentColor(i)};">${s.first[0]}</div>
+        <div><div class="student-name">${s.first} ${s.last}</div><div class="student-meta">${s.notes || '—'}</div></div>
+      </div></td>
+      <td><span class="tag tag-blue" style="font-size:11px;">${s.group}</span></td>
+      <td>${s.age}</td>
+      <td><div style="font-size:13px;">${s.parent}</div><div style="font-size:11px;color:var(--gray);">${s.phone}</div></td>
+      <td>₪${pay.price}</td>
+      <td>${DISCOUNT_LABELS[s.discount]}${s.discount==='custom'?' '+s.discountCustom+'%':''}</td>
+      <td>${s.paid ? '<span class="tag tag-green">שולם ✓</span>' : '<span class="tag tag-red">ממתין 💸</span>'}</td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-secondary btn-sm" onclick="editStudent(${s.id})">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="deleteStudent(${s.id})">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterStudents(v) { renderStudents(v); }
+function filterByGroup(v) { renderStudents('', v); }
+
+async function addStudent() {
+  const first = document.getElementById('newStudentFirst').value.trim();
+  const last = document.getElementById('newStudentLast').value.trim();
+  if (!first || !last) { showToast('נא למלא שם פרטי ושם משפחה'); return; }
+  const btn = document.querySelector('#addStudentModal .btn-primary');
+  btn.textContent = 'שומר...'; btn.disabled = true;
+  try {
+    const rows = await dbInsert('students', {
+      first, last,
+      age: parseInt(document.getElementById('newStudentAge').value) || 0,
+      student_group: document.getElementById('newStudentGroup').value,
+      parent: document.getElementById('newParentName').value,
+      phone: document.getElementById('newParentPhone').value,
+      discount: document.getElementById('newStudentDiscount').value,
+      discount_custom: parseInt(document.getElementById('newDiscountAmount').value) || 0,
+      notes: document.getElementById('newStudentNotes').value,
+    });
+    const s = mapStudent(rows[0]);
+    s.attendance = []; s.paid = false; s.paidAmount = 0;
+    students.push(s);
+    await addHistory('תלמידה חדשה', first+' '+last, '—', s.group);
+    closeModal('addStudentModal');
+    renderStudents();
+    document.getElementById('totalStudents').textContent = students.length;
+    showToast('התלמידה נוספה ונשמרה ✓ 🎉');
+    ['newStudentFirst','newStudentLast','newStudentAge','newParentName','newParentPhone','newDiscountAmount','newStudentNotes'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) {
+    showToast('שגיאה: ' + e.message);
+  } finally {
+    btn.textContent = '✓ הוספה'; btn.disabled = false;
+  }
+}
+
+async function deleteStudent(id) {
+  if (!confirm('למחוק תלמידה?')) return;
+  const s = students.find(x=>x.id===id);
+  try {
+    await dbDelete('students', id);
+    students = students.filter(x=>x.id!==id);
+    await addHistory('מחיקת תלמידה', s.first+' '+s.last, 'קיים','נמחק');
+    renderStudents();
+    document.getElementById('totalStudents').textContent = students.length;
+    showToast('התלמידה נמחקה ✓');
+  } catch(e) {
+    showToast('שגיאה במחיקה: ' + e.message);
+  }
+}
+
+function editStudent(id) {
+  showToast('עריכה — בקרוב! ✨');
+}
+
+// ===== ATTENDANCE =====
+function renderAttendance() {
+  const grid = document.getElementById('attendanceGrid');
+  const headers = ['<div class="att-header">תלמידה</div>',
+    ...WEEK_DATES.map((d,i)=>`<div class="att-header" style="text-align:center;">${WEEK_NAMES[i]}<br><span style="font-weight:400;font-size:11px;">${d}</span></div>`)
+  ];
+  const rows = students.map(s => {
+    const cells = s.attendance.map((present, di) => {
+      const isHoliday = false;
+      if (isHoliday) return `<div class="att-cell"><button class="att-btn holiday" title="חג">✡️</button></div>`;
+      return `<div class="att-cell"><button class="att-btn ${present?'present':'absent'}" onclick="toggleAtt(${s.id},${di})">${present?'✓':'✗'}</button></div>`;
+    });
+    return `<div class="att-cell"><div class="student-info"><div class="avatar" style="background:${getStudentColor(students.indexOf(s))};width:28px;height:28px;font-size:11px;">${s.first[0]}</div><span style="font-size:13px;font-weight:600;">${s.first}</span></div></div>${cells.join('')}`;
+  });
+  grid.innerHTML = headers.join('') + rows.join('');
+}
+
+async function toggleAtt(id, dayIdx) {
+  const s = students.find(x=>x.id===id);
+  const newVal = !s.attendance[dayIdx];
+  s.attendance[dayIdx] = newVal;
+  renderAttendance();
+  try {
+    const lessonDate = getLessonDateByIndex(dayIdx);
+    await sbFetch('attendance_records', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ student_id: id, lesson_date: lessonDate, present: newVal })
+    });
+    await addHistory('נוכחות', s.first+' '+s.last, !newVal?'נכחה':'חסרה', newVal?'נכחה':'חסרה');
+  } catch(e) {
+    console.error('attendance save error:', e);
+    showToast('שמירת נוכחות נכשלה ⚠️');
+  }
+}
+
+function getLessonDateByIndex(idx) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth()+1).padStart(2,'0');
+  const days = ['10','11','12','13','14'];
+  return `${year}-${month}-${days[idx] || String(idx+1).padStart(2,'0')}`;
+}
+
+// ===== PAYMENTS =====
+function renderPayments() {
+  const tbody = document.getElementById('paymentsBody');
+  tbody.innerHTML = students.map((s,i) => {
+    const pay = calcPayment(s);
+    const balance = pay.total - s.paidAmount;
+    return `<tr>
+      <td><div class="student-info"><div class="avatar" style="background:${getStudentColor(i)};width:28px;height:28px;font-size:11px;">${s.first[0]}</div><span style="font-weight:700;">${s.first} ${s.last}</span></div></td>
+      <td style="font-size:12px;">${s.group}</td>
+      <td style="text-align:center;">${pay.attended}/${s.attendance.length}</td>
+      <td>₪${pay.price}</td>
+      <td>${pay.disc>0?`<span class="tag tag-green">-₪${pay.disc}</span>`:'—'}</td>
+      <td style="font-weight:700;">₪${pay.total}</td>
+      <td style="color:var(--green);font-weight:700;">₪${s.paidAmount}</td>
+      <td style="font-weight:800;color:${balance>0?'var(--red)':'var(--green)'};">${balance>0?'₪'+balance+' 💸':'✓ מאוזן'}</td>
+      <td style="font-size:12px;">—</td>
+      <td>${s.paid?'<span class="tag tag-green">שולם</span>':'<span class="tag tag-red">ממתין</span>'}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="markPaid(${s.id})">✓ שולם</button></td>
+    </tr>`;
+  }).join('');
+
+  // update select in modal
+  const sel = document.getElementById('paymentStudent');
+  if (sel) {
+    sel.innerHTML = '<option>בחר תלמידה...</option>' + students.map(s=>`<option value="${s.id}">${s.first} ${s.last}</option>`).join('');
+  }
+}
+
+async function markPaid(id) {
+  const s = students.find(x=>x.id===id);
+  const pay = calcPayment(s);
+  s.paid = true;
+  s.paidAmount = pay.total;
+  renderPayments();
+  try {
+    const monthYear = getCurrentMonthYear();
+    const existing = await dbSelect('payments', `student_id=eq.${id}&month_year=eq.${monthYear}`);
+    if (existing.length > 0) {
+      await dbUpdate('payments', existing[0].id, { paid: true, amount_paid: pay.total, paid_date: new Date().toISOString().split('T')[0] });
+    } else {
+      await dbInsert('payments', { student_id: id, month_year: monthYear, lessons_attended: pay.attended, amount_due: pay.total, amount_paid: pay.total, paid: true, paid_date: new Date().toISOString().split('T')[0] });
+    }
+    await addHistory('תשלום', s.first+' '+s.last, `חוב ₪${pay.total}`, 'שולם ✓');
+    showToast('תשלום נרשם ונשמר ✓ 🎉');
+  } catch(e) {
+    showToast('שגיאה בשמירת תשלום: ' + e.message);
+  }
+}
+
+function recordPayment() {
+  const id = document.getElementById('paymentStudent').value;
+  const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+  const method = document.getElementById('paymentMethod').value;
+  const s = students.find(x=>x.id==id);
+  if (!s) { showToast('בחר תלמידה'); return; }
+  s.paidAmount = (s.paidAmount || 0) + amount;
+  const pay = calcPayment(s);
+  if (s.paidAmount >= pay.total) s.paid = true;
+  addHistory('תשלום', s.first+' '+s.last, '—', `₪${amount} (${method}) ✓`);
+  closeModal('addPaymentModal');
+  renderPayments();
+  showToast('תשלום נרשם ✓');
+}
+
+function sendReminders() { showToast('תזכורות נשלחו לכל החייבות 📱'); }
+
+// ===== CALENDAR =====
+let calYear = 2025, calMonth = 2; // 0-indexed, 2=March
+
+const HEB_CAL = {
+  '2025-03': { offset: 3, hebStart: 'כ׳ אדר', roshChodesh: 29 },
+};
+
+const JEWISH_EVENTS = {
+  '2025-03-13': 'תענית אסתר',
+  '2025-03-13b': 'פורים קטן',
+  '2025-03-14': 'פורים 🎭',
+  '2025-03-15': 'שושן פורים',
+  '2025-03-29': 'ר"ח ניסן 🌙',
+  '2025-04-12': 'שבת הגדול',
+  '2025-04-13': 'ערב פסח',
+  '2025-04-14': 'פסח 🍷',
+};
+
+const SCHOOL_VACATIONS = ['2025-04-13','2025-04-14','2025-04-15','2025-04-16','2025-04-17','2025-04-18','2025-04-19','2025-04-20','2025-04-21'];
+const LESSON_DAY = 3; // Wednesday
+
+function getHebDate(year, month, day) {
+  const hebrewDays = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ז׳','ח׳','ט׳','י׳','י"א','י"ב','י"ג','י"ד','ט"ו','ט"ז','י"ז','י"ח','י"ט','כ׳','כ"א','כ"ב','כ"ג','כ"ד','כ"ה','כ"ו','כ"ז','כ"ח','כ"ט','ל׳'];
+  // approximate: March 2025 starts ~כ' אדר ב'
+  const baseOffset = (month===2 && year===2025) ? 19 : 0;
+  const hebDay = ((baseOffset + day - 1) % 30);
+  const isNisan = (month===2 && day >= 30) || month===3;
+  const monthName = isNisan ? 'ניסן' : (month===2 ? 'אדר' : 'שבט');
+  return hebrewDays[hebDay] + ' ' + monthName;
+}
+
+function renderCalendar() {
+  const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const label = `${monthNames[calMonth]} ${calYear}`;
+  document.getElementById('calMonthLabel').textContent = label;
+  document.getElementById('calMonthLabel2').textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+  const dayHeaders = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+  let html = dayHeaders.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+
+  for (let i=0; i<firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d=1; d<=daysInMonth; d++) {
+    const date = new Date(calYear, calMonth, d);
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayOfWeek = date.getDay();
+    const isToday = (calYear===2025 && calMonth===2 && d===16);
+    const isLesson = dayOfWeek === LESSON_DAY;
+    const isHoliday = !!JEWISH_EVENTS[dateStr];
+    const isVacation = SCHOOL_VACATIONS.includes(dateStr);
+    const hebDate = getHebDate(calYear, calMonth, d);
+
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    else if (isHoliday) cls += ' holiday';
+    else if (isVacation) cls += ' vacation';
+    if (isLesson && !isHoliday && !isVacation) cls += ' has-lesson';
+
+    html += `<div class="${cls}" onclick="calDayClick(${d},'${dateStr}')">
+      <span>${d}</span>
+      <span class="heb-date">${hebDate.split(' ')[0]}</span>
+      ${isLesson && !isHoliday && !isVacation ? '<div class="dot"></div>' : ''}
+    </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+
+  // special days list
+  const events = Object.entries(JEWISH_EVENTS).filter(([k])=>k.startsWith(`${calYear}-${String(calMonth+1).padStart(2,'0')}`));
+  const specialDiv = document.getElementById('specialDaysList');
+  if (events.length===0) {
+    specialDiv.innerHTML = '<div style="color:var(--gray);font-size:13px;text-align:center;padding:12px;">אין ימים מיוחדים החודש</div>';
+  } else {
+    specialDiv.innerHTML = events.map(([k,v])=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#FEF9C3;border-radius:10px;"><span style="font-size:18px;">✡️</span><div><div style="font-weight:700;font-size:13px;">${v}</div><div style="font-size:11px;color:var(--gray);">${k.split('-').reverse().join('/')}</div></div></div>`).join('');
+  }
+}
+
+function calDayClick(d, dateStr) {
+  const event = JEWISH_EVENTS[dateStr];
+  if (event) showToast(`${d} — ${event}`);
+}
+
+function prevMonth() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function nextMonth() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function prevWeek() { showToast('שבוע קודם'); }
+function nextWeek() { showToast('שבוע הבא'); }
+
+// ===== LESSONS =====
+const sampleLessons = [
+  { title:'גמישות ומבוא לגלגל — מתחילות', group:'מתחילות', duration:60, difficulty:'קל', stations:['מתיחות גב','גלגל קדמי','גשר מוביל','משחק קבוצתי'] },
+  { title:'כוח ואיזון — בינוניות', group:'בינוניות', duration:60, difficulty:'בינוני', stations:['עמידת ידיים לקיר','גשר','קפיצות טרמפולינה','מסלול מכשולים'] },
+  { title:'סלטות מתקדמות — מתקדמות', group:'מתקדמות', duration:60, difficulty:'מאתגר', stations:['רונדאד','ערב קדמי','גלגל אחורי','כוח ידיים'] },
+];
+
+function renderLessons() {
+  document.getElementById('lessonsList').innerHTML = sampleLessons.map((l,i)=>`
+    <div class="lesson-card">
+      <div class="lesson-card-header">
+        <div>
+          <div class="lesson-card-title">${l.title}</div>
+          <div class="lesson-card-meta">${l.duration} דקות · ${l.difficulty}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <span class="tag tag-blue">${l.group}</span>
+          <button class="btn btn-secondary btn-sm">✏️</button>
+          <button class="btn btn-primary btn-sm">▶ הפעל</button>
+        </div>
+      </div>
+      <div class="station-list">${l.stations.map(s=>`<div class="station-tag">🏋️ ${s}</div>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function addStation() {
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;';
+  const n = document.querySelectorAll('#stationsInput > div').length + 1;
+  div.innerHTML = `<input type="text" placeholder="תחנה ${n}" style="flex:1;"><input type="text" placeholder="ציוד נדרש" style="width:160px;"><input type="number" placeholder="דקות" style="width:70px;">`;
+  document.getElementById('stationsInput').appendChild(div);
+}
+
+// ===== REPORTS =====
+function renderMonthlyChart() {
+  const months = ['אוק','נוב','דצ','ינו','פב','מרץ'];
+  const values = [2100,2400,2200,2600,2700,2840];
+  const max = Math.max(...values);
+  document.getElementById('monthlyChart').innerHTML = months.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:36px;font-size:12px;color:var(--gray);text-align:center;">${m}</span>
+      <div style="flex:1;" class="progress-bar-wrap"><div class="progress-bar" style="width:${values[i]/max*100}%;background:${i===5?'var(--red)':'var(--sky-dark)'};"></div></div>
+      <span style="font-size:12px;font-weight:700;width:60px;">₪${values[i].toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+// ===== HISTORY =====
+async function addHistory(action, details, before, after) {
+  const now = new Date();
+  const time = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}, ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  historyLog.unshift({ time, action, details, before, after });
+  const tbody = document.getElementById('historyBody');
+  if (tbody) renderHistory();
+  try {
+    await dbInsert('history_log', { action, details, before_val: before, after_val: after });
+  } catch(e) {
+    console.error('history save error:', e);
+  }
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('historyBody');
+  if (!tbody) return;
+  const colorMap = { 'תשלום':'tag-green','נוכחות':'tag-blue','תלמידה חדשה':'tag-yellow','מחיקת תלמידה':'tag-red','הנחה':'tag-orange','נוכחות':'tag-blue' };
+  tbody.innerHTML = historyLog.map(h=>`<tr>
+    <td style="font-size:12px;color:var(--gray);">${h.time}</td>
+    <td><span class="tag ${colorMap[h.action]||'tag-blue'}">${h.action}</span></td>
+    <td>${h.details}</td>
+    <td style="color:var(--red);font-size:12px;">${h.before}</td>
+    <td style="color:var(--green);font-size:12px;">${h.after}</td>
+  </tr>`).join('');
+}
+
+// ===== AI =====
+async function callAI(prompt) {
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'את עוזרת AI של חוג התעמלות קרקע בשם Fly. את מדברת עברית, את מקצועית, חמה ומועילה. תני תשובות קצרות, מעשיות ומעוררות השראה.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await resp.json();
+    return data.content?.[0]?.text || 'אירעה שגיאה, נסי שוב.';
+  } catch(e) {
+    return 'שגיאה בחיבור לAI. בדקי חיבור לאינטרנט.';
+  }
+}
+
+async function askAI() {
+  const q = document.getElementById('aiQuestion').value.trim();
+  if (!q) return;
+  const el = document.getElementById('aiMainResponse');
+  el.textContent = 'חושבת... ✨';
+  el.className = 'ai-response-area ai-thinking';
+  const ans = await callAI(q);
+  el.textContent = ans;
+  el.className = 'ai-response-area';
+}
+
+async function quickAsk(q) {
+  document.getElementById('aiQuestion').value = q;
+  await askAI();
+}
+
+async function generateLessonSummary() {
+  const date = document.getElementById('lessonDate').value;
+  const group = document.getElementById('lessonGroup').value;
+  const content = document.getElementById('lessonContent').value;
+  const challenges = document.getElementById('lessonChallenges').value;
+  const prompt = `סכמי שיעור בחוג התעמלות קרקע:\nקבוצה: ${group}\nתאריך: ${date}\nמה עשינו: ${content}\nאתגרים: ${challenges}\n\nתני: 1) ניתוח קצר של השיעור 2) 3 המלצות קונקרטיות לשיעור הבא 3) רעיונות לתחנות חדשות מותאמות לקבוצה זו`;
+  const el = document.getElementById('lessonSummaryResult');
+  const textEl = document.getElementById('lessonSummaryText');
+  el.style.display = 'block';
+  textEl.textContent = 'מנתחת... ✨';
+  textEl.className = 'ai-response-area ai-thinking';
+  const ans = await callAI(prompt);
+  textEl.textContent = ans;
+  textEl.className = 'ai-response-area';
+}
+
+async function generateAILesson() {
+  const el = document.getElementById('aiLessonSuggestion');
+  const textEl = document.getElementById('aiLessonText');
+  el.style.display = 'block';
+  textEl.textContent = 'מייצרת רעיונות... ✨';
+  textEl.className = 'ai-response-area ai-thinking';
+  const ans = await callAI('הצע 5 תחנות מגוונות ומעניינות לשיעור התעמלות קרקע לקבוצת בינוניות בגיל 9-12. כל תחנה: שם, ציוד, משך, תיאור קצר.');
+  textEl.textContent = ans;
+  textEl.className = 'ai-response-area';
+}
+
+async function generateStationIdeas() {
+  const el = document.getElementById('aiStationsResult');
+  const textEl = document.getElementById('aiStationsText');
+  el.style.display = 'block';
+  textEl.textContent = 'מייצרת רעיונות... ✨';
+  textEl.className = 'ai-response-area ai-thinking';
+  const ans = await callAI('תני לי 6 רעיונות חדשים ויצירתיים לתחנות בחוג התעמלות קרקע — שונות ממה שרגיל. כולל: שם התחנה, ציוד נדרש, קבוצת גיל מתאימה, ותיאור קצר.');
+  textEl.textContent = ans;
+  textEl.className = 'ai-response-area';
+}
+
+async function generateEquipIdeas() {
+  const equipment = ['Air Floor','Wedge Mats','Foam Blocks','Balance Beams','מזרנים'];
+  const el = document.getElementById('aiEquipResult');
+  el.innerHTML = '<div class="ai-response-area ai-thinking">מייצרת רעיונות לפי הציוד שלך... ✨</div>';
+  const ans = await callAI(`יש לי בחוג: ${equipment.join(', ')}. תני לי 5 תחנות מגוונות שמשתמשות בציוד הזה, כולל שם, כיצד להשתמש בציוד, ורמת קושי.`);
+  el.innerHTML = `<div class="ai-card"><div class="ai-card-header"><span class="ai-spark">✨</span><div class="ai-title">תחנות מותאמות לציוד שלך</div></div><div class="ai-response-area">${ans}</div></div>`;
+}
+
+async function analyzeStudent() {
+  const sel = document.querySelector('#page-progress select');
+  const name = sel?.value;
+  if (!name || name === 'בחר תלמידה...') { showToast('בחרי תלמידה תחילה'); return; }
+  const el = document.getElementById('studentAnalysis');
+  el.textContent = 'מנתח... ✨';
+  el.className = 'ai-response-area ai-thinking';
+  const s = students.find(x=>(x.first+' '+x.last)===name);
+  const pay = s ? calcPayment(s) : {};
+  const prompt = `תנתחי תלמידה בחוג התעמלות: ${name}, קבוצה: ${s?.group}, נוכחות: ${pay.attended}/5 שיעורים, הערות: ${s?.notes}. תני: 1) ניתוח קצר 2) נקודות חוזק 3) תחומים לשיפור 4) המלצות לתרגול אישי`;
+  const ans = await callAI(prompt);
+  el.textContent = ans;
+  el.className = 'ai-response-area';
+}
+
+function openProgressModal(name) { showToast(`עדכון התקדמות — ${name} — בקרוב!`); }
+
+// ===== MODALS =====
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'addPaymentModal') renderPayments();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ===== TABS =====
+function switchTab(btn, tabId) {
+  const parent = btn.closest('.page');
+  parent.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // hide all tab contents
+  const allTabs = parent.querySelectorAll('[id^="tab-"]');
+  allTabs.forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+tabId).style.display='block';
+}
+
+// ===== EXPORT =====
+function exportData() { showToast('ייצוא... בקרוב! 📊'); }
+function exportReport(type, name) { showToast(`מייצא ${name} ל-${type.toUpperCase()}... ✓`); }
+function exportHistory() { showToast('ייצוא היסטוריה... ✓'); }
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(80px)'; }, 3000);
+}
+
+// ===== INIT =====
+function updateDashboard() {
+  const total = students.length;
+  const unpaid = students.filter(s => !s.paid).length;
+  const paid = students.filter(s => s.paid);
+  const totalIncome = paid.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+  const totalAtt = students.reduce((sum, s) => sum + (s.attendance.filter(Boolean).length), 0);
+  const totalPossible = students.reduce((sum, s) => sum + s.attendance.length, 0);
+  const attRate = totalPossible > 0 ? Math.round(totalAtt / totalPossible * 100) : 0;
+  const openDebt = students.filter(s => !s.paid).reduce((sum, s) => {
+    const pay = calcPayment(s);
+    return sum + (pay.total - (s.paidAmount || 0));
+  }, 0);
+
+  document.getElementById('totalStudents').textContent = total;
+  document.getElementById('monthIncome').textContent = totalIncome.toLocaleString();
+  document.getElementById('attendanceRate').textContent = attRate;
+  document.getElementById('debtCount').textContent = unpaid;
+  document.getElementById('payTotalIncome').textContent = totalIncome.toLocaleString();
+  document.getElementById('payOpenDebt').textContent = openDebt.toLocaleString();
+  document.getElementById('payDebtCount').textContent = unpaid;
+
+  const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const now = new Date();
+  document.getElementById('currentMonthName').textContent = months[now.getMonth()];
+  document.getElementById('payMonthLabel').textContent = `סה"כ הכנסה — ${months[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('paySubLabel').textContent = `${paid.length} שילמו · ${unpaid} ממתינות`;
+
+  if (unpaid > 0) document.getElementById('debtAlert').style.display = 'block';
+
+  // notifications
+  const notifEl = document.getElementById('notifsList');
+  if (notifEl) {
+    const debtStudents = students.filter(s => !s.paid);
+    if (debtStudents.length === 0) {
+      notifEl.innerHTML = '<div style="color:var(--gray);font-size:13px;text-align:center;padding:20px;"><div style="font-size:32px;margin-bottom:8px;">✅</div>כל התשלומים מעודכנים!</div>';
+    } else {
+      notifEl.innerHTML = debtStudents.map(s => {
+        const pay = calcPayment(s);
+        return `<div class="notif"><div class="notif-icon">💸</div><div class="notif-text"><strong>${s.first} ${s.last}</strong> טרם שילמה על החודש (₪${pay.total})<div class="notif-time">ממתין לתשלום</div></div></div>`;
+      }).join('');
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lessonDate').value = new Date().toISOString().split('T')[0];
+  showToast('מתחבר לבסיס הנתונים... ⏳');
+  await initDB();
+  await loadStudents();
+  renderStudents();
+  updateDashboard();
+  // load history
+  try {
+    const rows = await dbSelect('history_log', 'order=id.desc&limit=50');
+    historyLog = rows.map(r => ({
+      time: new Date(r.created_at).toLocaleString('he-IL'),
+      action: r.action,
+      details: r.details,
+      before: r.before_val,
+      after: r.after_val
+    }));
+    renderHistory();
+  } catch(e) {}
+  showToast('המערכת מוכנה! ✓ 🎉');
+});
+</script>
+</body>
+</html>
