@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fly — מערכת ניהול חוג התעמלות</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --crimson: #C8102E;
+  --crimson-dark: #9B0D22;
+  --crimson-light: #F5E6E9;
+  --gold: #F0B429;
+  --gold-light: #FFF8E7;
+  --sky: #0EA5E9;
+  --ink: #0F172A;
+  --slate: #334155;
+  --muted: #64748B;
+  --border: #E2E8F0;
+  --surface: #F8FAFC;
+  --white: #FFFFFF;
+  --green: #10B981;
+  --red: #EF4444;
+  --orange: #F59E0B;
+  --purple: #8B5CF6;
+  --sidebar-w: 260px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  direction: rtl;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  position: fixed;
+  right: 0; top: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(200,16,46,0.3) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.logo-wrap {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+}
+
+.logo-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.logo-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--crimson), #FF3D5A);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(200,16,46,0.4);
+}
+
+.logo-text {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 400;
+  margin-right: 54px;
+}
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar { display: none; }
+
+.nav-group {
+  padding: 16px 20px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: rgba(255,255,255,0.55);
+  font-size: 13.5px;
+  font-weight: 500;
+  position: relative;
+  border-radius: 0;
+  margin: 1px 8px;
+  border-radius: 8px;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+}
+
+.nav-item.active {
+  background: rgba(200,16,46,0.2);
+  color: #FF6B80;
+  font-weight: 700;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  right: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 20px;
+  background: var(--crimson);
+  border-radius: 0 3px 3px 0;
+}
+
+.nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+
+.nav-badge {
+  margin-right: auto;
+  background: var(--crimson);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-right: var(--sidebar-w);
+  min-height: 100vh;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.page-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--crimson);
+  color: white;
+  box-shadow: 0 2px 8px rgba(200,16,46,0.3);
+}
+.btn-primary:hover { background: var(--crimson-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(200,16,46,0.4); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--slate);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface); border-color: var(--slate); }
+
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-gold:hover { background: #E0A820; transform: translateY(-1px); }
+
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-xs { padding: 4px 10px; font-size: 11px; }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* ===== CONTENT ===== */
+.content { padding: 28px 32px; }
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== STAT CARDS ===== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+.stat-card-accent {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+
+.stat-accent-red { background: linear-gradient(90deg, var(--crimson), #FF6B80); }
+.stat-accent-gold { background: linear-gradient(90deg, var(--gold), #FFD166); }
+.stat-accent-sky { background: linear-gradient(90deg, var(--sky), #38BDF8); }
+.stat-accent-green { background: linear-gradient(90deg, var(--green), #34D399); }
+
+.stat-icon-wrap {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.si-red { background: var(--crimson-light); }
+.si-gold { background: var(--gold-light); }
+.si-sky { background: #E0F2FE; }
+.si-green { background: #ECFDF5; }
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.stat-sub {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.sub-up { color: var(--green); }
+.sub-down { color: var(--red); }
+.sub-neutral { color: var(--muted); }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  padding: 18px 22px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body { padding: 20px 22px; }
+
+/* ===== GRID ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; overflow-y: auto; max-height: 65vh; }
+  .table-wrap thead th { position: sticky; top: 0; z-index: 5; background: var(--surface-2, #1e1e2e); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+thead tr { background: var(--surface); }
+
+th {
+  padding: 11px 16px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+  color: var(--ink);
+}
+
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #FAFCFF; }
+
+/* ===== AVATAR ===== */
+.avatar {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.student-cell { display: flex; align-items: center; gap: 10px; }
+.student-name { font-weight: 700; font-size: 13.5px; }
+.student-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ===== TAGS ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tag-red { background: #FEE2E2; color: #DC2626; }
+.tag-green { background: #DCFCE7; color: #16A34A; }
+.tag-gold { background: #FEF9C3; color: #A16207; }
+.tag-sky { background: #E0F2FE; color: #0369A1; }
+.tag-purple { background: #EDE9FE; color: #7C3AED; }
+.tag-orange { background: #FFEDD5; color: #C2410C; }
+.tag-muted { background: var(--surface); color: var(--muted); }
+
+/* ===== GROUP TAGS ===== */
+.tag-a { background: #FEE2E2; color: #9B1C1C; }
+.tag-b { background: #DBEAFE; color: #1E40AF; }
+.tag-c { background: #D1FAE5; color: #065F46; }
+
+/* ===== FORM ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--slate);
+  letter-spacing: 0.3px;
+}
+
+input, select, textarea {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'Heebo', sans-serif;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--white);
+  transition: all 0.15s;
+  direction: rtl;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--crimson);
+  box-shadow: 0 0 0 3px rgba(200,16,46,0.08);
+}
+
+textarea { resize: vertical; min-height: 80px; }
+
+/* ===== ATTENDANCE ===== */
+.att-table { width: 100%; border-collapse: collapse; }
+
+.att-table th {
+  background: var(--surface);
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.att-table th:first-child { text-align: right; min-width: 160px; }
+
+.att-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #F1F5F9;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.att-table td:first-child { text-align: right; }
+
+.att-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-weight: 700;
+}
+
+.att-btn:hover:not(.holiday) { transform: scale(1.1); }
+.att-btn.present { background: var(--green); border-color: var(--green); color: white; }
+.att-btn.absent { background: #FEE2E2; border-color: #FCA5A5; color: #DC2626; }
+.att-btn.holiday { background: #FEF9C3; border-color: #FDE68A; color: #92400E; cursor: default; }
+
+/* ===== PAYMENTS ===== */
+.pay-banner {
+  background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pay-banner::after {
+  content: '💫';
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 64px;
+  opacity: 0.15;
+}
+
+.pay-banner-title { font-size: 12px; opacity: 0.75; margin-bottom: 4px; }
+.pay-banner-amount { font-size: 36px; font-weight: 900; letter-spacing: -1px; }
+.pay-banner-sub { font-size: 12px; opacity: 0.65; margin-top: 3px; }
+
+.pay-kpi {
+  background: rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 14px 20px;
+  text-align: center;
+  min-width: 100px;
+  backdrop-filter: blur(10px);
+}
+
+.pay-kpi-num { font-size: 26px; font-weight: 900; }
+.pay-kpi-lbl { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+
+/* ===== CALENDAR ===== */
+.cal-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.cal-day-name {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  min-height: 52px;
+  background: var(--surface);
+  border: 1px solid transparent;
+}
+
+.cal-cell:hover:not(.empty) { background: var(--border); }
+.cal-cell.today { background: var(--crimson); color: white; border-color: var(--crimson); }
+.cal-cell.shabbat{opacity:.35;}
+  .cal-cell.lesson { border-color: var(--crimson); background: var(--white); }
+.cal-cell.holiday { background: #FEF9C3; border-color: #FDE68A; }
+.cal-cell.vacation { background: #E0F2FE; border-color: #BAE6FD; }
+.cal-cell.empty { background: transparent; cursor: default; }
+
+.cal-greg { font-size: 13px; font-weight: 700; }
+.cal-heb { font-size: 9px; color: var(--muted); margin-top: 1px; }
+.cal-cell.today .cal-heb { color: rgba(255,255,255,0.7); }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--crimson); margin-top: 2px; }
+.cal-cell.today .cal-dot { background: white; }
+
+/* ===== PROGRESS ===== */
+.prog-bar-wrap { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.prog-bar { height: 100%; border-radius: 99px; transition: width 0.5s; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.6);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 28px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+  direction: rtl;
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from { opacity:0; transform:scale(0.96) translateY(8px); }
+  to { opacity:1; transform:scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modal-title { font-size: 18px; font-weight: 900; }
+
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.modal-close:hover { background: var(--surface); }
+.modal-footer { margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+
+.tab-btn.active {
+  background: var(--white);
+  color: var(--crimson);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  font-weight: 700;
+}
+
+/* ===== NOTIFICATIONS ===== */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.notif-item:last-child { border-bottom: none; }
+
+.notif-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.ni-red { background: #FEE2E2; }
+.ni-gold { background: #FEF9C3; }
+.ni-sky { background: #E0F2FE; }
+.ni-green { background: #DCFCE7; }
+
+.notif-body { flex: 1; }
+.notif-text { font-size: 13px; line-height: 1.5; }
+.notif-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* ===== AI SECTION ===== */
+.ai-panel {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-radius: 16px;
+  padding: 22px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-panel::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: -40px;
+  width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(200,16,46,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ai-badge {
+  background: linear-gradient(135deg, var(--crimson), #FF6B80);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.ai-title { font-size: 15px; font-weight: 800; }
+.ai-sub { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+.ai-input-row { display: flex; gap: 10px; }
+.ai-input-row input {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
+  border-radius: 10px;
+}
+
+.ai-input-row input::placeholder { color: rgba(255,255,255,0.35); }
+.ai-input-row input:focus { border-color: rgba(200,16,46,0.6); box-shadow: none; background: rgba(255,255,255,0.1); }
+
+.ai-response {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 80px;
+  margin-top: 14px;
+  color: rgba(255,255,255,0.85);
+  white-space: pre-wrap;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ai-thinking { color: rgba(255,255,255,0.4); font-style: italic; }
+
+/* ===== EQUIPMENT ===== */
+.equip-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.equip-item:last-child { border-bottom: none; }
+
+.equip-icon-wrap {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.equip-name { font-weight: 700; font-size: 13.5px; }
+.equip-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ===== SEARCH ===== */
+.search-wrap { position: relative; }
+.search-wrap input { padding-right: 38px; }
+.search-wrap::before {
+  content: '🔍';
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ===== MONTH NAV ===== */
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-nav-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.month-nav-btn:hover { background: var(--surface); border-color: var(--slate); }
+.month-label { font-size: 14px; font-weight: 800; min-width: 130px; text-align: center; }
+
+/* ===== DIVIDER ===== */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ===== TOAST ===== */
+#toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
+
+/* ===== FAMILY BADGE ===== */
+.family-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #EDE9FE;
+  color: #5B21B6;
+}
+
+/* ===== RECEIPT TAG ===== */
+.receipt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.receipt-yes { background: #DCFCE7; color: #15803D; }
+.receipt-no { background: #FEE2E2; color: #DC2626; }
+.receipt-yes:hover, .receipt-no:hover { transform: scale(1.05); }
+
+/* ===== EXPENSE CARD ===== */
+.expense-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.expense-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+.expense-amount { font-size: 22px; font-weight: 900; color: var(--crimson); }
+.expense-detail { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ===== LESSON PLAN ===== */
+.lesson-card {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 12px;
+  transition: all 0.15s;
+  cursor: pointer;
+  background: var(--white);
+}
+
+.lesson-card:hover { border-color: var(--crimson); box-shadow: 0 4px 12px rgba(200,16,46,0.08); }
+
+.station-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--slate);
+  margin: 2px;
+}
+
+/* ===== STARS ===== */
+.stars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.star-card {
+  text-align: center;
+  padding: 16px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  transition: all 0.15s;
+}
+
+.star-card:hover { border-color: var(--gold); box-shadow: 0 4px 12px rgba(240,180,41,0.15); }
+.star-medal { font-size: 28px; margin-bottom: 8px; }
+.star-name { font-weight: 800; font-size: 13px; }
+.star-group { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.star-note { font-size: 11px; font-weight: 700; margin-top: 6px; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 40px; color: var(--muted); }
+.empty-icon { font-size: 44px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-main">
+      <div class="logo-icon">💫</div>
+      <div class="logo-text">Fly</div>
+    </div>
+    <div class="logo-sub">סטודיו להתעמלות קרקע</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-group">ראשי</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">⊞</span> לוח בקרה
+    </div>
+    <div class="nav-item" onclick="showPage('students')">
+      <span class="nav-icon">🤸</span> תלמידות
+    </div>
+
+    <div class="nav-group">שיעורים</div>
+    <div class="nav-item" onclick="showPage('attendance')">
+      <span class="nav-icon">✓</span> נוכחות
+    </div>
+    <div class="nav-item" onclick="showPage('calendar')">
+      <span class="nav-icon">◫</span> לוח שנה
+    </div>
+    <div class="nav-item" onclick="showPage('lessons')">
+      <span class="nav-icon">✎</span> מערכי שיעור
+    </div>
+
+    <div class="nav-group">כספים</div>
+    <div class="nav-item" onclick="showPage('payments')">
+      <span class="nav-icon">₪</span> תשלומים
+      <span class="nav-badge" id="debtBadge">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('expenses')">
+      <span class="nav-icon">📋</span> הוצאות
+    </div>
+
+    <div class="nav-group">ניהול</div>
+    <div class="nav-item" onclick="showPage('equipment')">
+      <span class="nav-icon">⚙</span> ציוד
+    </div>
+    <div class="nav-item" onclick="showPage('staff')">
+      <span class="nav-icon">👤</span> צוות
+    </div>
+    <div class="nav-item" onclick="showPage('progress')">
+      <span class="nav-icon">★</span> התקדמות
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="nav-icon">◎</span> דוחות
+    </div>
+    <div class="nav-item" onclick="showPage('ai')">
+      <span class="nav-icon">◈</span> עוזרת AI
+    </div>
+
+    <div class="nav-group">מערכת</div>
+    <div class="nav-item" onclick="showPage('history')">
+      <span class="nav-icon">↺</span> היסטוריה
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">◉</span> הגדרות
+    </div>
+  </nav>
+
+  <div class="sidebar-footer"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2b4beabfcb9b3a0b9b392b5bfb3bbbefcb1bdbf">[email&#160;protected]</a> · 055-676-1498</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="page-title" id="pageTitle">לוח בקרה</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">↑ ייצוא</button>
+      <button class="btn btn-ghost btn-sm" onclick="showPage('reports')">📊 דוחות</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addStudentModal')">+ תלמידה חדשה</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-red"></div>
+          <div class="stat-icon-wrap si-red">🤸</div>
+          <div class="stat-value" id="totalStudents">—</div>
+          <div class="stat-label">תלמידות פעילות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-gold"></div>
+          <div class="stat-icon-wrap si-gold">₪</div>
+          <div class="stat-value">₪<span id="monthIncome">—</span></div>
+          <div class="stat-label">הכנסה — <span id="currentMonthName">החודש</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-sky"></div>
+          <div class="stat-icon-wrap si-sky">✓</div>
+          <div class="stat-value"><span id="attendanceRate">—</span>%</div>
+          <div class="stat-label">נוכחות — השבוע</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-green"></div>
+          <div class="stat-icon-wrap si-red">⚠</div>
+          <div class="stat-value" id="debtCount">—</div>
+          <div class="stat-label">חייבות תשלום</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔔 התראות ותזכורות</div>
+          </div>
+          <div class="card-body" style="padding-top:8px;padding-bottom:8px;">
+            <div id="notifsList">
+              <div class="empty-state" style="padding:20px;">
+                <div style="font-size:28px;margin-bottom:8px;">✅</div>
+                <div style="font-size:13px;color:var(--muted);">טוען...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 נוכחות לפי קבוצה</div>
+          </div>
+          <div class="card-body" id="groupAttendance">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:13px;font-weight:700;">צעירות (4.5–10)</span>
+                  <span style="font-size:12px;color:var(--muted);" id="attA">—</span>
+                </div>
+                <div class="prog-bar-wrap"><div class="prog-bar" id="attBarA" style="background:var(--green);width:0%;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:13px;font-weight:700;">נערות (11–13)</span>
+                  <span style="font-size:12px;color:var(--muted);" id="attB">—</span>
+                </div>
+                <div class="prog-bar-wrap"><div class="prog-bar" id="attBarB" style="background:var(--sky);width:0%;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:13px;font-weight:700;">בוגרות (14–23)</span>
+                  <span style="font-size:12px;color:var(--muted);" id="attC">—</span>
+                </div>
+                <div class="prog-bar-wrap"><div class="prog-bar" id="attBarC" style="background:var(--gold);width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💫 כוכבות השבוע</div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('addStarModal')">+ הוסף כוכבת</button>
+        </div>
+        <div class="card-body">
+          <div class="stars-grid" id="starsGrid">
+            <div class="empty-state" style="grid-column:1/-1;padding:16px;">
+              <div style="font-size:32px;margin-bottom:8px;">💫</div>
+              <div style="font-size:12px;color:var(--muted);">עוד לא הוספת כוכבות השבוע</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="page" id="page-students">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤸 רשימת תלמידות</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="search-wrap">
+              <input type="text" placeholder="חיפוש..." style="width:180px;font-size:13px;" oninput="filterStudents(this.value)">
+            </div>
+            <select style="font-size:13px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;" onchange="filterByGroup(this.value)">
+              <option value="">כל הקבוצות</option>
+              <option>צעירות (4.5–10)</option>
+              <option>נערות (11–13)</option>
+              <option>בוגרות (14–23)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addStudentModal')">+ הוספה</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>תלמידה</th>
+                <th>קבוצה</th>
+                <th>גיל</th>
+                <th>הורה / טלפון</th>
+                <th>הנחה</th>
+                <th>תשלום חודשי</th>
+                <th>סטטוס</th>
+                <th>קבלה</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✓ סימון נוכחות</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="month-nav">
+              <button class="month-nav-btn" onclick="nextWeek()">‹</button>
+              <div class="month-label" id="attendanceWeekLabel">שבוע נוכחי</div>
+              <button class="month-nav-btn" onclick="prevWeek()">›</button>
+            </div>
+            <select style="font-size:13px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;" onchange="filterAttGroup(this.value)">
+              <option value="">כל הקבוצות</option>
+              <option>צעירות (4.5–10)</option>
+              <option>נערות (11–13)</option>
+              <option>בוגרות (14–23)</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div id="attendanceContainer" style="overflow-x:auto;padding:0 4px;"></div>
+        </div>
+        <div style="padding:14px 22px;display:flex;gap:20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);">
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--green);display:inline-block;"></span>נכחה</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#FEE2E2;border:1px solid #FCA5A5;display:inline-block;"></span>חסרה (-₪40/60)</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#FEF9C3;display:inline-block;"></span>חג / חופשה</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">◫ לוח שנה — ימי שני</div>
+          <div class="month-nav">
+            <button class="month-nav-btn" onclick="nextMonth()">‹</button>
+            <div class="month-label" id="calMonthLabel">—</div>
+            <button class="month-nav-btn" onclick="prevMonth()">›</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="cal-days-header" id="calDaysHeader"></div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);">
+            <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border:2px solid var(--crimson);border-radius:3px;display:inline-block;"></span>שיעור</span>
+            <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#FEF9C3;border:1px solid #FDE68A;border-radius:3px;display:inline-block;"></span>חג</span>
+            <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:3px;display:inline-block;"></span>חופשה</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="specialDaysCard">
+        <div class="card-header">
+          <div class="card-title">✡ ימים מיוחדים</div>
+        </div>
+        <div class="card-body" id="specialDaysList"></div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="page" id="page-lessons">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-lessons-lib')">📚 ספריית מערכים</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-lessons-new')">✎ מערך חדש</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-lessons-stations')">🏋 תחנות</button>
+      </div>
+
+      <div id="tab-lessons-lib">
+        <div id="lessonsList"></div>
+      </div>
+
+      <div id="tab-lessons-new" style="display:none;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">✎ מערך שיעור חדש</div></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><label>שם המערך</label><input type="text" placeholder="לדוג׳: גמישות ואקרובטיקה"></div>
+              <div class="form-group"><label>קבוצת יעד</label>
+                <select><option>קבוצה א</option><option>קבוצה ב</option><option>קבוצה ג</option><option>כולן</option></select>
+              </div>
+              <div class="form-group"><label>משך (דקות)</label><input type="number" value="60"></div>
+              <div class="form-group"><label>רמת קושי</label><select><option>קל</option><option>בינוני</option><option>מאתגר</option></select></div>
+              <div class="form-group form-full"><label>חימום (10 דקות)</label><textarea placeholder="תאר פעילויות חימום..."></textarea></div>
+              <div class="form-group form-full"><label>תחנות</label>
+                <div id="stationsInput">
+                  <div style="display:flex;gap:8px;margin-bottom:8px;"><input type="text" placeholder="תחנה 1" style="flex:1;"><input type="text" placeholder="ציוד" style="width:150px;"><input type="number" placeholder="דק'" style="width:65px;"></div>
+                  <div style="display:flex;gap:8px;margin-bottom:8px;"><input type="text" placeholder="תחנה 2" style="flex:1;"><input type="text" placeholder="ציוד" style="width:150px;"><input type="number" placeholder="דק'" style="width:65px;"></div>
+                  <div style="display:flex;gap:8px;margin-bottom:8px;"><input type="text" placeholder="תחנה 3" style="flex:1;"><input type="text" placeholder="ציוד" style="width:150px;"><input type="number" placeholder="דק'" style="width:65px;"></div>
+                </div>
+                <button class="btn btn-ghost btn-xs" onclick="addStation()" style="margin-top:4px;">+ תחנה</button>
+              </div>
+              <div class="form-group form-full"><label>קירור וסיום</label><textarea placeholder="פעילויות קירור..."></textarea></div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;">
+              <button class="btn btn-primary">💾 שמור</button>
+              <button class="btn btn-gold" onclick="generateAILesson()">✨ הצע תחנות AI</button>
+            </div>
+            <div id="aiLessonSuggestion" style="display:none;margin-top:16px;">
+              <div class="ai-panel"><div class="ai-header"><span class="ai-badge">AI</span><div class="ai-title">הצעות תחנות</div></div>
+              <div class="ai-response" id="aiLessonText"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-lessons-stations" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏋 בנק תחנות</div>
+            <button class="btn btn-gold btn-sm" onclick="generateStationIdeas()">✨ רעיונות AI</button>
+          </div>
+          <div class="card-body">
+            <div class="grid-3" id="stationsBank">
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">🤸</div>
+                <div style="font-weight:800;font-size:14px;">גלגל קדמי</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">מזרן · 5–8 דקות</div>
+                <span class="tag tag-a">קבוצה א</span>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">🌉</div>
+                <div style="font-weight:800;font-size:14px;">גשר</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">מזרן · 8 דקות</div>
+                <span class="tag tag-b">קבוצה ב</span>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">🤸‍♀️</div>
+                <div style="font-weight:800;font-size:14px;">פליק פלאק</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">מאמן · 10 דקות</div>
+                <span class="tag tag-c">קבוצה ג</span>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">⚖️</div>
+                <div style="font-weight:800;font-size:14px;">קורת איזון</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">קורה · 8 דקות</div>
+                <span class="tag tag-b">קבוצה ב+</span>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">🧘</div>
+                <div style="font-weight:800;font-size:14px;">גמישות גב</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">מזרן · 10 דקות</div>
+                <span class="tag tag-muted">כולן</span>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:22px;margin-bottom:8px;">🏃</div>
+                <div style="font-weight:800;font-size:14px;">מסלול מכשולים</div>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">כל הציוד · 12 דקות</div>
+                <span class="tag tag-muted">כולן</span>
+              </div>
+            </div>
+            <div id="aiStationsResult" style="display:none;margin-top:16px;">
+              <div class="ai-panel"><div class="ai-header"><span class="ai-badge">AI</span><div class="ai-title">רעיונות חדשים</div></div>
+              <div class="ai-response" id="aiStationsText"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <div class="pay-banner">
+        <div>
+          <div class="pay-banner-title" id="payMonthLabel">סה"כ הכנסה — החודש</div>
+          <div class="pay-banner-amount">₪<span id="payTotalIncome">—</span></div>
+          <div class="pay-banner-sub" id="paySubLabel">טוען...</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div class="pay-kpi">
+            <div class="pay-kpi-num">₪<span id="payOpenDebt">—</span></div>
+            <div class="pay-kpi-lbl">חוב פתוח</div>
+          </div>
+          <div class="pay-kpi">
+            <div class="pay-kpi-num" id="payDebtCount">—</div>
+            <div class="pay-kpi-lbl">לא שילמו</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">₪ מצב תשלומים</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="sendReminders()">📧 שלח תזכורות</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addPaymentModal')">+ רשום תשלום</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>תלמידה</th>
+                <th>קבוצה</th>
+                <th>בסיס חודשי</th>
+                <th>חיסורים</th>
+                <th>ניכוי</th>
+                <th>לתשלום</th>
+                <th>שולם</th>
+                <th>יתרה</th>
+                <th>קבלה</th>
+                <th>סטטוס</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="paymentsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSES -->
+    <div class="page" id="page-expenses">
+      <div class="grid-3" style="margin-bottom:20px;">
+        <div class="expense-card">
+          <div class="expense-title">🏛 שכירות אולם</div>
+          <div class="expense-amount">₪390</div>
+          <div class="expense-detail">3.25 שעות × ₪120/שעה · כל יום שני</div>
+        </div>
+        <div class="expense-card">
+          <div class="expense-title">👤 אסיסטנטית</div>
+          <div class="expense-amount" id="assistantMonthly">₪—</div>
+          <div class="expense-detail">₪40/שעה · לפי נוכחות</div>
+        </div>
+        <div class="expense-card">
+          <div class="expense-title">📊 רווח נטו (חיזוי)</div>
+          <div class="expense-amount" id="netProfit">₪—</div>
+          <div class="expense-detail">הכנסות פחות הוצאות</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👤 נוכחות אסיסטנטית</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addStaffModal')">+ עדכון נוכחות</button>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>תאריך</th>
+                <th>שעות</th>
+                <th>הגיעה</th>
+                <th>מחליפה</th>
+                <th>סכום</th>
+                <th>הערות</th>
+              </tr>
+            </thead>
+            <tbody id="staffBody">
+              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">לא נרשמו שיעורים עדיין</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div class="page" id="page-equipment">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙ ציוד הסטודיו</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addEquipModal')">+ הוסף ציוד</button>
+        </div>
+        <div class="card-body" style="padding-top:8px;padding-bottom:8px;">
+          <div id="equipList">
+            <div class="equip-item"><div class="equip-icon-wrap">🟦</div><div style="flex:1;"><div class="equip-name">Air Floor</div><div class="equip-detail">1 יחידה</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🎯</div><div style="flex:1;"><div class="equip-name">פלקסי רול</div><div class="equip-detail">3 יחידות — 9מ, 3מ, 10מ</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🐴</div><div style="flex:1;"><div class="equip-name">חמור קפיצה</div><div class="equip-detail">1 יחידה</div></div><span class="tag tag-gold">לא בשימוש</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🤸</div><div style="flex:1;"><div class="equip-name">מאמן פליק פלאק</div><div class="equip-detail">1 יחידה</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🧀</div><div style="flex:1;"><div class="equip-name">מזרוני גבינה</div><div class="equip-detail">3 יחידות</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">⚖️</div><div style="flex:1;"><div class="equip-name">קורות איזון</div><div class="equip-detail">3 יחידות</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🪑</div><div style="flex:1;"><div class="equip-name">ספסלים</div><div class="equip-detail">מספר לא ידוע</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🪜</div><div style="flex:1;"><div class="equip-name">סולם שבדי</div><div class="equip-detail">1 יחידה</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🟩</div><div style="flex:1;"><div class="equip-name">מזרונים דקים</div><div class="equip-detail">3 יחידות</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🔴</div><div style="flex:1;"><div class="equip-name">רצועות גומי</div><div class="equip-detail">מספר לא ידוע</div></div><span class="tag tag-green">תקין</span></div>
+            <div class="equip-item"><div class="equip-icon-wrap">🟫</div><div style="flex:1;"><div class="equip-name">קוביות פלציב</div><div class="equip-detail">2 יחידות</div></div><span class="tag tag-green">תקין</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="page" id="page-staff">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👤 ניהול צוות</div>
+        </div>
+        <div class="card-body">
+          <div style="background:var(--surface);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <div style="font-weight:800;font-size:15px;margin-bottom:4px;">אסיסטנטית — אחות המדריכה</div>
+            <div style="font-size:13px;color:var(--muted);">₪40 לשעה · 3.25 שעות לשיעור</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">עלות שיעור: ₪130 (כשנוכחת)</div>
+          </div>
+          <table>
+            <thead><tr><th>תאריך</th><th>שעות</th><th>נוכחת?</th><th>מחליפה?</th><th>שם מחליפה</th><th>תשלום</th><th>הערות</th><th></th></tr></thead>
+            <tbody id="staffTable"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">לחצי "+ עדכן נוכחות" להוספת שיעור</td></tr></tbody>
+          </table>
+          <div style="margin-top:16px;">
+            <button class="btn btn-primary btn-sm" onclick="openModal('addStaffModal')">+ עדכן נוכחות שיעור</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="page" id="page-progress">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">★ מעקב התקדמות</div>
+          <div class="search-wrap">
+            <input type="text" placeholder="חיפוש תלמידה..." style="width:200px;font-size:13px;">
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="color:var(--muted);font-size:13px;text-align:center;padding:32px;">
+            <div style="font-size:40px;margin-bottom:12px;">★</div>
+            מסמכי התקדמות יבנו לפי תלמידה — בקרוב! 🚀<br>
+            <span style="font-size:12px;">כל תלמידה תקבל קובץ מעקב אישי לפי השיעורים</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✨ ניתוח AI לתלמידה</div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;gap:12px;margin-bottom:16px;">
+            <select style="flex:1;font-size:13px;padding:10px 14px;" id="progressStudent">
+              <option>בחר תלמידה...</option>
+            </select>
+            <button class="btn btn-gold" onclick="analyzeStudent()">✨ נתח והמלץ</button>
+          </div>
+          <div id="studentAnalysis" class="ai-response ai-thinking" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:14px;min-height:80px;">בחרי תלמידה לקבלת ניתוח מותאם אישית...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-red"></div>
+          <div class="stat-icon-wrap si-red">📆</div>
+          <div class="stat-value">₪<span id="repMonthIncome">—</span></div>
+          <div class="stat-label">הכנסה החודש</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-gold"></div>
+          <div class="stat-icon-wrap si-gold">📈</div>
+          <div class="stat-value">₪<span id="repYearForecast">—</span></div>
+          <div class="stat-label">חיזוי שנתי</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-sky"></div>
+          <div class="stat-icon-wrap si-sky">✂️</div>
+          <div class="stat-value">₪<span id="repDiscounts">—</span></div>
+          <div class="stat-label">הנחות החודש</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent stat-accent-green"></div>
+          <div class="stat-icon-wrap si-green">👥</div>
+          <div class="stat-value" id="repStudents">—</div>
+          <div class="stat-label">תלמידות פעילות</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📤 ייצוא דוחות</div></div>
+        <div class="card-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="exportReport('excel','students')">📊 תלמידות לאקסל</button>
+            <button class="btn btn-ghost" onclick="exportReport('pdf','payments')">📄 תשלומים PDF</button>
+            <button class="btn btn-ghost" onclick="exportReport('excel','payments')">📊 תשלומים לאקסל</button>
+            <button class="btn btn-primary" onclick="exportReport('pdf','monthly')">📄 סיכום חודשי מלא</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="page" id="page-ai">
+      <div class="ai-panel" style="margin-bottom:20px;">
+        <div class="ai-header">
+          <span class="ai-badge">AI</span>
+          <div>
+            <div class="ai-title">עוזרת Fly AI</div>
+            <div class="ai-sub">שאלי כל שאלה על החוג, תלמידות, שיעורים ורעיונות</div>
+          </div>
+        </div>
+        <div class="ai-input-row">
+          <input type="text" id="aiQuestion" placeholder="לדוג׳: רעיונות לשיעור גמישות למתחילות..." onkeydown="if(event.key==='Enter')askAI()">
+          <button class="btn btn-primary" onclick="askAI()">שאל ✨</button>
+        </div>
+        <div class="ai-response ai-thinking" id="aiMainResponse">שאלי אותי כל דבר הקשור לחוג ✨</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚡ שאלות מהירות</div></div>
+        <div class="card-body">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('5 רעיונות לתחנות גמישות')">🧘 גמישות</button>
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('שיעור ראשון עם קבוצת מתחילות חדשה')">🌟 שיעור ראשון</button>
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('תרגילי חימום לילדות 5-8')">🔥 חימום</button>
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('איך לעודד תלמידה שתקועה')">💪 עידוד</button>
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('רעיונות לאירוע הופעה סוף שנה')">🎪 הופעה</button>
+            <button class="btn btn-ghost btn-sm" onclick="quickAsk('תרגילי פליק פלאק למתחילות')">🤸 פליק פלאק</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📝 סיכום שיעור + המלצות</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group"><label>תאריך</label><input type="date" id="lessonDate"></div>
+            <div class="form-group"><label>קבוצה</label><select id="lessonGroup"><option>קבוצה א</option><option>קבוצה ב</option><option>קבוצה ג</option></select></div>
+            <div class="form-group form-full"><label>מה עשינו?</label><textarea id="lessonContent" placeholder="תארי מה עשיתם, אילו תחנות, מה עבד..."></textarea></div>
+            <div class="form-group form-full"><label>הצלחות ואתגרים</label><textarea id="lessonChallenges" placeholder="מה הלך טוב? מה היה מאתגר?"></textarea></div>
+          </div>
+          <button class="btn btn-gold" style="margin-top:12px;" onclick="generateLessonSummary()">✨ ניתוח + רעיונות לשיעור הבא</button>
+          <div id="lessonSummaryResult" style="display:none;margin-top:16px;">
+            <div class="ai-panel"><div class="ai-header"><span class="ai-badge">AI</span><div class="ai-title">ניתוח ורעיונות</div></div>
+            <div class="ai-response" id="lessonSummaryText"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">↺ היסטוריית שינויים</div>
+          <button class="btn btn-ghost btn-sm">📤 ייצוא</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>תאריך ושעה</th><th>פעולה</th><th>פרטים</th><th>לפני</th><th>אחרי</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">◉ הגדרות חוג</div></div>
+          <div class="card-body">
+            <div class="form-grid" style="grid-template-columns:1fr;">
+              <div class="form-group"><label>שם הסטודיו</label><input type="text" value="Fly — סטודיו להתעמלות קרקע"></div>
+              <div class="form-group"><label>יום השיעור</label><select><option selected>שני</option><option>ראשון</option><option>שלישי</option><option>רביעי</option><option>חמישי</option></select></div>
+              <div class="form-group"><label>מייל</label><input type="email" value="fly.karka@gmail.com"></div>
+              <div class="form-group"><label>טלפון</label><input type="tel" value="055-676-1498"></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px;">💾 שמור</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">₪ מחירים והנחות</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:10px;">
+                <div><div style="font-weight:700;font-size:13px;">צעירות (4.5–10)</div><div style="font-size:11px;color:var(--muted);">16:00–16:45</div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;color:var(--muted);">₪/חודש:</span><input type="number" value="190" style="width:75px;text-align:center;padding:6px;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:10px;">
+                <div><div style="font-weight:700;font-size:13px;">נערות (11–13)</div><div style="font-size:11px;color:var(--muted);">16:45–17:45</div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;color:var(--muted);">₪/חודש:</span><input type="number" value="190" style="width:75px;text-align:center;padding:6px;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:10px;">
+                <div><div style="font-weight:700;font-size:13px;">בוגרות (14–23)</div><div style="font-size:11px;color:var(--muted);">17:45–19:15</div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;color:var(--muted);">₪/חודש:</span><input type="number" value="250" style="width:75px;text-align:center;padding:6px;"></div>
+              </div>
+              <div class="divider"></div>
+              <div style="font-weight:800;font-size:13px;">ניכוי חיסור</div>
+              <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;">קבוצות א+ב</span><div style="display:flex;align-items:center;gap:4px;"><input type="number" value="40" style="width:65px;text-align:center;padding:6px;"><span style="font-size:13px;">₪ לחיסור</span></div></div>
+              <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;">קבוצה ג</span><div style="display:flex;align-items:center;gap:4px;"><input type="number" value="60" style="width:65px;text-align:center;padding:6px;"><span style="font-size:13px;">₪ לחיסור</span></div></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px;">💾 שמור</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🤸 הוספת תלמידה חדשה</div>
+      <button class="modal-close" onclick="closeModal('addStudentModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>שם פרטי</label><input type="text" id="newFirst"></div>
+      <div class="form-group"><label>שם משפחה</label><input type="text" id="newLast"></div>
+      <div class="form-group"><label>גיל</label><input type="number" id="newAge" step="0.5"></div>
+      <div class="form-group"><label>קבוצה</label>
+        <select id="newGroup">
+          <option>צעירות (4.5–10)</option>
+          <option>נערות (11–13)</option>
+          <option>בוגרות (14–23)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>שם הורה</label><input type="text" id="newParent"></div>
+      <div class="form-group"><label>טלפון</label><input type="tel" id="newPhone"></div>
+      <div class="form-group"><label>אימייל</label><input type="email" id="newEmail"></div>
+      <div class="form-group"><label>הנחה</label>
+        <select id="newDiscount">
+          <option value="none">ללא הנחה</option>
+          <option value="sisters">הנחת אחיות</option>
+          <option value="friend">הנחת חברה (₪10)</option>
+          <option value="free">חינם (חסד)</option>
+          <option value="custom">הסכם אישי</option>
+        </select>
+      </div>
+      <div class="form-group"><label>מחיר מיוחד (₪) — אם הסכם אישי</label><input type="number" id="newCustomPrice"></div>
+      <div class="form-group form-full"><label>הערות</label><textarea id="newNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addStudentModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="addStudent()">✓ הוספה</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addPaymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">₪ רישום תשלום</div>
+      <button class="modal-close" onclick="closeModal('addPaymentModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>תלמידה</label><select id="payStudent"></select></div>
+      <div class="form-group"><label>סכום (₪)</label><input type="number" id="payAmount"></div>
+      <div class="form-group"><label>אמצעי</label><select id="payMethod"><option>מזומן</option><option>העברה בנקאית</option></select></div>
+      <div class="form-group"><label>תאריך</label><input type="date" id="payDate"></div>
+      <div class="form-group"><label>קבלה הוצאה?</label><select id="payReceipt"><option value="no">לא</option><option value="yes">כן</option></select></div>
+      <div class="form-group"><label>הערה</label><input type="text" id="payNote"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addPaymentModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="recordPayment()">✓ רשום</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 עדכון נוכחות אסיסטנטית</div>
+      <button class="modal-close" onclick="closeModal('addStaffModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>תאריך שיעור</label><input type="date" id="staffDate"></div>
+      <div class="form-group"><label>שעות עבודה</label><input type="number" id="staffHours" value="3.25" step="0.25"></div>
+      <div class="form-group"><label>הגיעה?</label><select id="staffPresent"><option value="yes">כן</option><option value="no">לא</option></select></div>
+      <div class="form-group"><label>הביאה מחליפה?</label><select id="staffSub"><option value="no">לא</option><option value="yes">כן</option></select></div>
+      <div class="form-group form-full"><label>שם מחליפה (אם רלוונטי)</label><input type="text" id="staffSubName"></div>
+      <div class="form-group form-full"><label>הערות</label><textarea id="staffNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addStaffModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="addStaffRecord()">✓ שמור</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addStarModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">💫 הוסף כוכבת שבוע</div>
+      <button class="modal-close" onclick="closeModal('addStarModal')">✕</button>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>תלמידה</label><select id="starStudent"></select></div>
+      <div class="form-group"><label>מדליה</label><select id="starMedal"><option>🥇</option><option>🥈</option><option>🥉</option><option>⭐</option><option>💫</option></select></div>
+      <div class="form-group"><label>הישג</label><input type="text" id="starAchieve" placeholder="לדוג׳: שחרור גב מלא!"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addStarModal')">ביטול</button>
+      <button class="btn btn-gold" onclick="addStar()">✓ הוסף</button>
+    </div>
+  </div>
+</div>
+
+<!-- REMINDER MODAL -->
+<div class="modal-overlay" id="reminderModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3 class="modal-title">📱 תזכורת תשלום</h3>
+      <button class="modal-close" onclick="closeModal('reminderModal')">✕</button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>חודש לגביה</label>
+      <input type="text" id="reminderMonth" placeholder="לדוג׳: ניסן תשפ״ו" oninput="updateReminderText()" style="margin-top:5px;width:100%;">
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>נוסח (ניתן לעריכה)</label>
+      <textarea id="reminderText" style="min-height:145px;font-size:13px;line-height:1.7;margin-top:5px;width:100%;"></textarea>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:9px;padding:9px;margin-bottom:12px;font-size:12px;color:var(--muted);">💡 העתיקי ושלחי בוואטסאפ / מייל לכל ההורים</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reminderModal')">סגור</button>
+      <button class="btn btn-primary" onclick="copyReminder()">📋 העתק נוסח</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ===== SUPABASE =====
+const SB_URL = 'https://mcbnwncrqyhsekbezbmx.supabase.co';
+const SB_KEY = 'sb_publishable_CVEfhJ3ngh7qk1hd6O4xyQ_MCByVbvE';
+
+async function sb(path, opts={}) {
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...(opts.headers||{})
+    }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  const t = await r.text();
+  return t ? JSON.parse(t) : [];
+}
+
+const dbGet = (t,q='') => sb(`${t}?${q}&order=id`);
+const dbPost = (t,d) => sb(t, {method:'POST', body:JSON.stringify(d)});
+const dbPatch = (t,id,d) => sb(`${t}?id=eq.${id}`, {method:'PATCH', body:JSON.stringify(d), prefer:'return=minimal'});
+const dbDel = (t,id) => sb(`${t}?id=eq.${id}`, {method:'DELETE', prefer:'return=minimal'});
+
+// ===== CONSTANTS =====
+const PRICES = { 'צעירות (4.5–10)':190, 'נערות (11–13)':190, 'בוגרות (14–23)':250 };
+const ABSENCE_DEDUCT = { 'צעירות (4.5–10)':40, 'נערות (11–13)':40, 'בוגרות (14–23)':60 };
+const MONTH_NAMES = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const AVATAR_COLORS = ['#C8102E','#0EA5E9','#10B981','#F0B429','#8B5CF6','#F59E0B','#E05CB0','#14B8A6','#6366F1','#EF4444'];
+const DISCOUNT_LABELS = {'none':'—','sisters':'אחיות','friend':'חברה -₪10','free':'חינם','custom':'הסכם'};
+
+const JEWISH_EVENTS = {
+  '2026-03-03':'תענית אסתר','2026-03-05':'פורים 🎭','2026-03-06':'שושן פורים',
+  '2026-04-01':'ר"ח ניסן 🌙','2026-04-13':'ערב פסח','2026-04-14':'פסח 🍷',
+  '2026-04-15':'פסח','2026-04-16':'פסח','2026-04-17':'פסח','2026-04-18':'פסח',
+  '2026-04-19':'פסח','2026-04-20':'פסח','2026-04-21':'פסח',
+  '2026-05-22':'ל"ג בעומר','2026-06-02':'שבועות 🌸',
+};
+
+const SCHOOL_VACATIONS = [
+  '2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17',
+  '2026-04-18','2026-04-19','2026-04-20','2026-04-21','2026-04-22',
+];
+
+// ===== STATE =====
+let students = [];
+let stars = [];
+let staffRecords = [];
+let historyLog = [];
+let calYear = 2026, calMonth = 2; // March 2026
+
+function mapStudent(r) {
+  return {
+    id: r.id, first: r.first, last: r.last, age: r.age||0,
+    group: r.student_group||'צעירות (4.5–10)',
+    parent: r.parent||'', phone: r.phone||'',
+    email: r.email||'',
+    discount: r.discount||'none',
+    discountCustom: r.discount_custom||0,
+    notes: r.notes||'',
+    attendance: [], paid: false, paidAmount: 0, receiptGiven: false
+  };
+}
+
+function calcPayment(s) {
+  // Free students
+  if (s.discount === 'free') return { base:0, deduct:0, absences:0, total:0, disc:0 };
+
+  // Custom personal price
+  let base = s.discount === 'custom' && s.discountCustom > 0 ? s.discountCustom : (PRICES[s.group]||190);
+
+  // Friend discount
+  const friendDisc = s.discount === 'friend' ? 10 : 0;
+
+  const deductPerAbs = ABSENCE_DEDUCT[s.group]||40;
+  const absences = s.attendance.filter(v=>v===false).length;
+  const deduct = absences * deductPerAbs;
+
+  const total = Math.max(0, base - deduct - friendDisc);
+  return { base, deduct, absences, total, disc: friendDisc };
+}
+
+function getMonthStart() {
+  const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`;
+}
+function getMonthEnd() {
+  const n=new Date(); const l=new Date(n.getFullYear(),n.getMonth()+1,0);
+  return `${l.getFullYear()}-${String(l.getMonth()+1).padStart(2,'0')}-${String(l.getDate()).padStart(2,'0')}`;
+}
+function getCurrentMonthYear() { const n=new Date(); return `${n.getMonth()+1}/${n.getFullYear()}`; }
+function getColor(i) { return AVATAR_COLORS[i%AVATAR_COLORS.length]; }
+function getGroupColor(g){if(g&&g.includes('צעירות'))return'#E8193C';if(g&&g.includes('נערות'))return'#5BAED6';if(g&&g.includes('בוגרות'))return'#A78BFA';return'#22C55E';}
+function getGroupEmoji(g){if(g&&g.includes('צעירות'))return'🌸';if(g&&g.includes('נערות'))return'⭐';if(g&&g.includes('בוגרות'))return'💫';return'🤸';}
+function getGroupTagClass(g){if(g&&g.includes('צעירות'))return'tag-red';if(g&&g.includes('נערות'))return'tag-blue';if(g&&g.includes('בוגרות'))return'tag-purple';return'tag-green';}
+
+// ===== LOAD DATA =====
+async function loadAll() {
+  try {
+    const rows = await dbGet('students');
+    const attRows = await dbGet('attendance_records', `lesson_date=gte.${getMonthStart()}&lesson_date=lte.${getMonthEnd()}`);
+    const payRows = await dbGet('payments', `month_year=eq.${getCurrentMonthYear()}`);
+    students = rows.map(mapStudent);
+    students.forEach(s => {
+      s.attendance = attRows.filter(a=>a.student_id===s.id).map(a=>a.present);
+      const p = payRows.find(p=>p.student_id===s.id);
+      s.paid = p?.paid||false;
+      s.paidAmount = p?.amount_paid||0;
+      s.receiptGiven = p?.receipt_given||false;
+    });
+  } catch(e) { console.error('loadAll:', e); showToast('שגיאה בטעינת נתונים'); }
+}
+
+async function loadHistory() {
+  try {
+    const rows = await dbGet('history_log', 'order=id.desc&limit=50');
+    historyLog = rows.map(r=>({
+      time: new Date(r.created_at).toLocaleString('he-IL'),
+      action: r.action, details: r.details, before: r.before_val, after: r.after_val
+    }));
+  } catch(e) {}
+}
+
+// ===== NAVIGATION =====
+const PAGE_TITLES = {
+  dashboard:'לוח בקרה', students:'תלמידות 🤸', attendance:'נוכחות ✓',
+  calendar:'לוח שנה', lessons:'מערכי שיעור ✎', payments:'תשלומים ₪',
+  expenses:'הוצאות 📋', equipment:'ציוד ⚙', staff:'צוות 👤',
+  progress:'התקדמות ★', reports:'דוחות ◎', ai:'עוזרת AI ◈',
+  history:'היסטוריה ↺', settings:'הגדרות ◉'
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(`'${name}'`)) n.classList.add('active');
+  });
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[name]||name;
+  if(name==='students') renderStudents();
+  if(name==='payments') renderPayments();
+  if(name==='attendance') renderAttendance();
+  if(name==='calendar') renderCalendar();
+  if(name==='lessons') renderLessons();
+  if(name==='history') renderHistory();
+  if(name==='reports') renderReports();
+  if(name==='progress') populateProgressSelect();
+}
+
+// ===== DASHBOARD =====
+function updateDashboard() {
+  const total = students.length;
+  const unpaid = students.filter(s=>!s.paid&&s.discount!=='free').length;
+  const income = students.filter(s=>s.paid).reduce((sum,s)=>sum+(s.paidAmount||0),0);
+  const totalAtt = students.reduce((sum,s)=>sum+s.attendance.filter(Boolean).length,0);
+  const totalPoss = students.reduce((sum,s)=>sum+s.attendance.length,0);
+  const attRate = totalPoss>0 ? Math.round(totalAtt/totalPoss*100) : 0;
+  const openDebt = students.filter(s=>!s.paid&&s.discount!=='free').reduce((sum,s)=>{
+    const p=calcPayment(s); return sum+(p.total-(s.paidAmount||0));
+  },0);
+
+  document.getElementById('totalStudents').textContent = total;
+  document.getElementById('monthIncome').textContent = income.toLocaleString();
+  document.getElementById('attendanceRate').textContent = attRate;
+  document.getElementById('debtCount').textContent = unpaid;
+  const dc=document.getElementById('debtCount').closest('.stat-card');
+  if(dc){dc.style.cursor='pointer';dc.onclick=()=>showPage('payments');}
+  document.getElementById('debtBadge').textContent = unpaid>0?unpaid:'';
+  document.getElementById('payTotalIncome').textContent = income.toLocaleString();
+  document.getElementById('payOpenDebt').textContent = openDebt.toLocaleString();
+  document.getElementById('payDebtCount').textContent = unpaid;
+  document.getElementById('currentMonthName').textContent = MONTH_NAMES[new Date().getMonth()];
+  document.getElementById('payMonthLabel').textContent = `סה"כ הכנסה — ${MONTH_NAMES[new Date().getMonth()]} ${new Date().getFullYear()}`;
+  document.getElementById('paySubLabel').textContent = `${students.filter(s=>s.paid).length} שילמו · ${unpaid} ממתינות`;
+
+  // Group attendance
+  ['א','ב','ג'].forEach((g,gi) => {
+    const groups = ['צעירות (4.5–10)','נערות (11–13)','בוגרות (14–23)'];
+    const gs = students.filter(s=>s.group===groups[gi]);
+    const att = gs.reduce((sum,s)=>sum+s.attendance.filter(Boolean).length,0);
+    const poss = gs.reduce((sum,s)=>sum+s.attendance.length,0);
+    const rate = poss>0?Math.round(att/poss*100):0;
+    const el = document.getElementById(`attA`);
+    document.getElementById(`att${['A','B','C'][gi]}`).textContent = `${gs.length} תלמידות · ${rate}%`;
+    document.getElementById(`attBar${['A','B','C'][gi]}`).style.width = rate+'%';
+  });
+
+  // Notifications
+  const notifEl = document.getElementById('notifsList');
+  const debtors = students.filter(s=>!s.paid&&s.discount!=='free');
+  if(debtors.length===0) {
+    notifEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);"><div style="font-size:28px;margin-bottom:8px;">✅</div><div style="font-size:13px;">כל התשלומים מעודכנים!</div></div>`;
+  } else {
+    notifEl.innerHTML = debtors.slice(0,5).map(s=>{
+      const p=calcPayment(s);
+      return `<div class="notif-item">
+        <div class="notif-icon-wrap ni-red">💸</div>
+        <div class="notif-body">
+          <div class="notif-text"><strong>${s.first} ${s.last}</strong> — טרם שילמה על החודש</div>
+          <div class="notif-time">לתשלום: ₪${p.total}</div>
+        </div>
+        <button class="btn btn-primary btn-xs" onclick="markPaid(${s.id})">שולם</button>
+      </div>`;
+    }).join('') + (debtors.length>5?`<div style="text-align:center;padding:10px;font-size:12px;color:var(--muted);">ועוד ${debtors.length-5} נוספות</div><div onclick="showPage('payments')" style="text-align:center;margin-top:7px;padding:7px;background:rgba(232,25,60,0.1);border-radius:8px;font-size:12px;color:var(--red);cursor:pointer;font-weight:700;">← לרשימה המלאה</div>`:'');
+  }
+
+  // Reports page
+  document.getElementById('repMonthIncome').textContent = income.toLocaleString();
+  document.getElementById('repYearForecast').textContent = (income*12).toLocaleString();
+  document.getElementById('repStudents').textContent = total;
+  document.getElementById('repDiscounts').textContent = students.reduce((sum,s)=>{
+    const p=calcPayment(s); return sum+(p.disc||0)+(p.deduct||0);
+  },0).toLocaleString();
+
+  // Expenses
+  const weeks = 4;
+  const staffCost = staffRecords.filter(r=>r.present).reduce((sum,r)=>sum+((r.hours||3.25)*40),0);
+  document.getElementById('assistantMonthly').textContent = `₪${staffCost}`;
+  const rentMonthly = 390 * weeks;
+  document.getElementById('netProfit').textContent = `₪${(income - rentMonthly - staffCost).toLocaleString()}`;
+}
+
+// ===== STUDENTS =====
+function renderStudents(filter='', groupFilter='') {
+  const tbody = document.getElementById('studentsBody');
+  const filtered = students.filter(s=>{
+    const name = s.first+' '+s.last;
+    return (!filter||name.includes(filter)) && (!groupFilter||s.group===groupFilter);
+  });
+  tbody.innerHTML = filtered.map((s,i)=>{
+    const p = calcPayment(s);
+    const groupTag = s.group.includes('א')?'tag-a':s.group.includes('ב')?'tag-b':'tag-c';
+    return `<tr>
+      <td><div class="student-cell">
+        <div class="avatar" style="background:${getColor(i)};">${s.first[0]}</div>
+        <div><div class="student-name">${s.first} ${s.last}</div><div class="student-meta">${s.notes||'—'}</div></div>
+      </div></td>
+      <td><span class="tag ${groupTag}">${s.group.split(' ')[0]+' '+s.group.split(' ')[1]}</span></td>
+      <td>${s.age}</td>
+      <td><div style="font-size:13px;">${s.parent||'—'}</div><div style="font-size:11px;color:var(--muted);">${s.phone||'—'}</div></td>
+      <td>${DISCOUNT_LABELS[s.discount]||'—'}</td>
+      <td style="font-weight:700;">${s.discount==='free'?'<span class="tag tag-purple">חינם</span>':`₪${p.total}`}</td>
+      <td>${s.paid?'<span class="tag tag-green">שולם ✓</span>':'<span class="tag tag-red">ממתין</span>'}</td>
+      <td><span class="receipt-tag ${s.receiptGiven?'receipt-yes':'receipt-no'}" onclick="toggleReceipt(${s.id})">${s.receiptGiven?'✓ קבלה':'✗ אין'}</span></td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-xs" onclick="editStudent(${s.id})">✎</button>
+        <button class="btn btn-ghost btn-xs" onclick="deleteStudent(${s.id})">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterStudents(v) { renderStudents(v); }
+function filterByGroup(v) { renderStudents('', v); }
+
+async function addStudent() {
+  const first = document.getElementById('newFirst').value.trim();
+  const last = document.getElementById('newLast').value.trim();
+  if(!first||!last){showToast('נא למלא שם');return;}
+  const btn = document.querySelector('#addStudentModal .btn-primary');
+  btn.disabled = true; btn.textContent = 'שומר...';
+  try {
+    const rows = await dbPost('students',{
+      first, last,
+      age: parseFloat(document.getElementById('newAge').value)||0,
+      student_group: document.getElementById('newGroup').value,
+      parent: document.getElementById('newParent').value,
+      phone: document.getElementById('newPhone').value,
+      email: document.getElementById('newEmail')?.value||'',
+      discount: document.getElementById('newDiscount').value,
+      discount_custom: parseFloat(document.getElementById('newCustomPrice').value)||0,
+      notes: document.getElementById('newNotes').value,
+    });
+    const s = mapStudent(rows[0]);
+    s.attendance=[]; s.paid=false; s.paidAmount=0;
+    students.push(s);
+    await saveHistory('תלמידה חדשה', first+' '+last, '—', s.group);
+    closeModal('addStudentModal');
+    renderStudents();
+    updateDashboard();
+    populateSelects();
+    showToast('✓ '+first+' '+last+' נוספה!');
+    ['newFirst','newLast','newAge','newParent','newPhone','newEmail','newCustomPrice','newNotes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  } catch(e){showToast('שגיאה: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='✓ הוספה';}
+}
+
+async function deleteStudent(id) {
+  if(!confirm('למחוק תלמידה?'))return;
+  const s=students.find(x=>x.id===id);
+  try {
+    await dbDel('students',id);
+    students=students.filter(x=>x.id!==id);
+    await saveHistory('מחיקה',s.first+' '+s.last,'קיים','נמחק');
+    renderStudents(); updateDashboard(); populateSelects();
+    showToast('✓ נמחקה');
+  } catch(e){showToast('שגיאה');}
+}
+
+function editStudent(id){ showToast('עריכה — בקרוב ✨'); }
+
+async function toggleReceipt(id) {
+  const s = students.find(x=>x.id===id);
+  s.receiptGiven = !s.receiptGiven;
+  try {
+    const monthYear = getCurrentMonthYear();
+    const existing = await dbGet('payments',`student_id=eq.${id}&month_year=eq.${monthYear}`);
+    if(existing.length>0) await dbPatch('payments',existing[0].id,{receipt_given:s.receiptGiven});
+    renderStudents(); renderPayments();
+    showToast(s.receiptGiven?'✓ קבלה סומנה':'קבלה הוסרה');
+  } catch(e){}
+}
+
+// ===== ATTENDANCE =====
+let attFilter = '';
+function filterAttGroup(v) { attFilter = v; renderAttendance(); }
+
+function renderAttendance() {
+  const container = document.getElementById('attendanceContainer');
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  // Get all Mondays in current month
+  const mondays = [];
+  for(let d=1; d<=new Date(year,month+1,0).getDate(); d++) {
+    const dt = new Date(year, month, d);
+    if(dt.getDay()===1) mondays.push(dt);
+  }
+
+  const filtered = attFilter ? students.filter(s=>s.group===attFilter) : students;
+
+  let html = `<table class="att-table"><thead><tr><th>תלמידה</th>`;
+  mondays.forEach(m => {
+    const label = `${m.getDate()}/${m.getMonth()+1}`;
+    const dateStr = m.toISOString().split('T')[0];
+    const isHoliday = !!JEWISH_EVENTS[dateStr] || SCHOOL_VACATIONS.includes(dateStr);
+    html += `<th style="min-width:60px;">${label}${isHoliday?'<br><span style="font-size:9px;color:var(--orange);">חג</span>':'<br><span style="font-size:9px;color:var(--muted);">שני</span>'}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  filtered.forEach((s,i) => {
+    html += `<tr><td><div class="student-cell">
+      <div class="avatar" style="background:${getColor(i)};width:28px;height:28px;font-size:11px;border-radius:7px;">${s.first[0]}</div>
+      <span style="font-weight:700;font-size:13px;">${s.first}</span>
+    </div></td>`;
+    mondays.forEach((m, di) => {
+      const dateStr = m.toISOString().split('T')[0];
+      const isHoliday = !!JEWISH_EVENTS[dateStr] || SCHOOL_VACATIONS.includes(dateStr);
+      if(isHoliday) {
+        html += `<td><button class="att-btn holiday">✡</button></td>`;
+      } else {
+        const present = s.attendance[di];
+        html += `<td><button class="att-btn ${present===true?'present':present===false?'absent':''}" onclick="toggleAtt(${s.id},${di},'${dateStr}')">${present===true?'✓':present===false?'✗':'·'}</button></td>`;
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  const label = `ימי שני — ${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('attendanceWeekLabel').textContent = label;
+}
+
+async function toggleAtt(id, dayIdx, dateStr) {
+  const s = students.find(x=>x.id===id);
+  const cur = s.attendance[dayIdx];
+  const newVal = cur!==true;
+  s.attendance[dayIdx] = newVal;
+  renderAttendance();
+  try {
+    await fetch(`${SB_URL}/rest/v1/attendance_records`, {
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify({student_id:id, lesson_date:dateStr, present:newVal})
+    });
+    await saveHistory('נוכחות', s.first+' '+s.last, cur?'נכחה':'חסרה', newVal?'נכחה':'חסרה');
+    updateDashboard();
+  } catch(e){showToast('שגיאה בשמירה');}
+}
+
+function prevWeek(){showToast('ניווט לחודש קודם — בקרוב');}
+function nextWeek(){showToast('ניווט לחודש הבא — בקרוב');}
+
+// ===== PAYMENTS =====
+function renderPayments() {
+  const tbody = document.getElementById('paymentsBody');
+  tbody.innerHTML = students.map((s,i)=>{
+    if(s.discount==='free') return `<tr>
+      <td><div class="student-cell"><div class="avatar" style="background:${getColor(i)};width:28px;height:28px;font-size:11px;border-radius:7px;">${s.first[0]}</div><span style="font-weight:700;">${s.first} ${s.last}</span></div></td>
+      <td><span class="tag tag-muted">${s.group.split(' ')[0]+' '+s.group.split(' ')[1]}</span></td>
+      <td colspan="7" style="color:var(--muted);font-style:italic;">חינם (חסד)</td>
+      <td><span class="receipt-tag receipt-no">✗ אין</span></td>
+      <td><span class="tag tag-purple">פטורה</span></td>
+      <td></td>
+    </tr>`;
+    const p=calcPayment(s);
+    const bal=p.total-(s.paidAmount||0);
+    const groupTag=s.group.includes('א')?'tag-a':s.group.includes('ב')?'tag-b':'tag-c';
+    return `<tr>
+      <td><div class="student-cell"><div class="avatar" style="background:${getColor(i)};width:28px;height:28px;font-size:11px;border-radius:7px;">${s.first[0]}</div><span style="font-weight:700;">${s.first} ${s.last}</span></div></td>
+      <td><span class="tag ${groupTag}">${s.group.split(' ')[0]+' '+s.group.split(' ')[1]}</span></td>
+      <td>₪${p.base}</td>
+      <td style="text-align:center;">${p.absences}</td>
+      <td>${p.deduct>0?`<span class="tag tag-red">-₪${p.deduct}</span>`:'—'}</td>
+      <td style="font-weight:800;">₪${p.total}</td>
+      <td style="color:var(--green);font-weight:700;">₪${s.paidAmount||0}</td>
+      <td style="font-weight:800;color:${bal>0?'var(--red)':'var(--green)'};">${bal>0?`₪${bal}`:'✓'}</td>
+      <td><span class="receipt-tag ${s.receiptGiven?'receipt-yes':'receipt-no'}" onclick="toggleReceipt(${s.id})">${s.receiptGiven?'✓ קבלה':'✗ אין'}</span></td>
+      <td>${s.paid?'<span class="tag tag-green">שולם</span>':'<span class="tag tag-red">ממתין</span>'}</td>
+      <td><button class="btn btn-primary btn-xs" onclick="markPaid(${s.id})">✓ שולם</button></td>
+    </tr>`;
+  }).join('');
+
+  const sel = document.getElementById('payStudent');
+  if(sel) {
+    sel.innerHTML = '<option>בחר תלמידה...</option>' +
+      students.filter(s=>s.discount!=='free').map(s=>`<option value="${s.id}">${s.first} ${s.last}</option>`).join('');
+  }
+}
+
+async function markPaid(id) {
+  const s=students.find(x=>x.id===id);
+  const p=calcPayment(s);
+  s.paid=true; s.paidAmount=p.total;
+  renderPayments(); updateDashboard();
+  try {
+    const monthYear=getCurrentMonthYear();
+    const existing=await dbGet('payments',`student_id=eq.${id}&month_year=eq.${monthYear}`);
+    if(existing.length>0) await dbPatch('payments',existing[0].id,{paid:true,amount_paid:p.total,paid_date:new Date().toISOString().split('T')[0]});
+    else await dbPost('payments',{student_id:id,month_year:monthYear,lessons_attended:p.absences,amount_due:p.total,amount_paid:p.total,paid:true,paid_date:new Date().toISOString().split('T')[0]});
+    await saveHistory('תשלום',s.first+' '+s.last,`חוב ₪${p.total}`,'שולם ✓');
+    showToast('✓ תשלום נרשם!');
+  } catch(e){showToast('שגיאה בשמירה');}
+}
+
+async function recordPayment() {
+  const idVal = document.getElementById('payStudent').value;
+  const s = students.find(x=>x.id==idVal);
+  if(!s){showToast('בחר תלמידה');return;}
+  const amount = parseFloat(document.getElementById('payAmount').value)||0;
+  s.paidAmount=(s.paidAmount||0)+amount;
+  const p=calcPayment(s);
+  if(s.paidAmount>=p.total) s.paid=true;
+  if(document.getElementById('payReceipt').value==='yes') s.receiptGiven=true;
+  closeModal('addPaymentModal');
+  renderPayments(); updateDashboard();
+  try {
+    const monthYear=getCurrentMonthYear();
+    const existing=await dbGet('payments',`student_id=eq.${s.id}&month_year=eq.${monthYear}`);
+    const data={amount_paid:s.paidAmount,paid:s.paid,receipt_given:s.receiptGiven,paid_date:new Date().toISOString().split('T')[0]};
+    if(existing.length>0) await dbPatch('payments',existing[0].id,data);
+    else await dbPost('payments',{student_id:s.id,month_year:monthYear,...data,amount_due:p.total});
+    await saveHistory('תשלום',s.first+' '+s.last,'—',`₪${amount} ✓`);
+    showToast('✓ תשלום נרשם!');
+  } catch(e){}
+}
+
+function sendReminders() {
+  const month = new Date().toLocaleString('he-IL',{month:'long'});
+  document.getElementById('reminderMonth').value = month;
+  updateReminderText();
+  openModal('reminderModal');
+}
+function updateReminderText() {
+  const month = document.getElementById('reminderMonth').value||'______';
+  document.getElementById('reminderText').value =
+    'שלום רב,\n\nתזכורת ידידותית לתשלום שכר הלימוד לחודש '+month+'.\n\nניתן לשלם במזומן או בהעברה בנקאית.\n\nתודה רבה! 🤸\nסטודיו Fly - שירה';
+}
+function copyReminder() {
+  navigator.clipboard.writeText(document.getElementById('reminderText').value)
+    .then(()=>showToast('✓ הנוסח הועתק!'));
+}
+
+// ===== CALENDAR =====
+function renderCalendar() {
+  const dayNames = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+  document.getElementById('calDaysHeader').innerHTML = dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+
+  const HM={'2026-1':'טבת–שבט','2026-2':'שבט–אדר ב','2026-3':'אדר ב–ניסן','2026-4':'ניסן–אייר','2026-5':'אייר–סיון','2026-6':'סיון–תמוז','2026-7':'תמוז–אב','2026-8':'אב–אלול','2026-9':'תשרי–חשון','2026-10':'חשון–כסלו','2026-11':'כסלו–טבת','2026-12':'טבת–שבט'};
+  const hm=HM[`${calYear}-${calMonth+1}`]||'';
+  const label=`${MONTH_NAMES[calMonth]} ${calYear}${hm?' | '+hm:''}`;
+  document.getElementById('calMonthLabel').textContent=label;
+
+  const firstDay = new Date(calYear,calMonth,1).getDay();
+  const daysInMonth = new Date(calYear,calMonth+1,0).getDate();
+
+  let html = '';
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-cell empty"></div>`;
+
+  for(let d=1;d<=daysInMonth;d++) {
+    const dt = new Date(calYear,calMonth,d);
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = dt.getDay();
+    const isToday = (calYear===2026&&calMonth===2&&d===16);
+    const isMonday = dow===1;
+    const isHoliday = !!JEWISH_EVENTS[dateStr];
+    const isVacation = SCHOOL_VACATIONS.includes(dateStr);
+    const isLesson = isMonday && !isHoliday && !isVacation;
+
+    let cls = 'cal-cell';
+    if(isToday) cls+=' today';
+    else if(isHoliday) cls+=' holiday';
+    else if(isVacation) cls+=' vacation';
+    if(isLesson) cls+=' lesson';
+    if(dow===6) cls+=' shabbat';
+
+    const hebDay = getHebDay(calYear, calMonth, d);
+    html += `<div class="${cls}" onclick="calClick('${dateStr}','${JEWISH_EVENTS[dateStr]||''}')">
+      <span class="cal-greg">${d}</span>
+      <span class="cal-heb">${hebDay}</span>
+      ${JEWISH_EVENTS[dateStr]?`<span style="font-size:8px;color:#F5C518;display:block;text-align:center;line-height:1.2;">${JEWISH_EVENTS[dateStr]}</span>`:''}
+      ${isLesson?'<div class="cal-dot"></div>':''}
+    </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+
+  const events = Object.entries(JEWISH_EVENTS).filter(([k])=>k.startsWith(`${calYear}-${String(calMonth+1).padStart(2,'0')}`));
+  const spEl = document.getElementById('specialDaysList');
+  if(events.length===0) {
+    spEl.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">אין ימים מיוחדים החודש</div>`;
+  } else {
+    spEl.innerHTML = events.map(([k,v])=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#FEF9C3;border-radius:10px;margin-bottom:8px;">
+        <span style="font-size:18px;">✡️</span>
+        <div><div style="font-weight:700;font-size:13px;">${v}</div>
+        <div style="font-size:11px;color:var(--muted);">${k.split('-').reverse().join('/')}</div></div>
+      </div>`).join('');
+  }
+}
+
+function getHebDay(year, month, day) {
+  const hebrewNums = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','יג','יד','טו','טז','יז','יח','יט','כ','כא','כב','כג','כד','כה','כו','כז','כח','כט','ל'];
+  const base = (month===2&&year===2026) ? 5 : 0; // approx Adar offset for Mar 2026
+  const idx = ((base + day - 1) % 30);
+  return hebrewNums[idx];
+}
+
+function calClick(dateStr, event) { if(event) showToast(event); }
+function prevMonth() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function nextMonth() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+// ===== LESSONS =====
+const sampleLessons = [
+  {title:'גמישות ומבוא לגלגל',group:'קבוצה א',duration:45,difficulty:'קל',stations:['מתיחות גב','גלגל קדמי','גשר מוביל','משחק קבוצתי']},
+  {title:'כוח ואיזון',group:'קבוצה ב',duration:60,difficulty:'בינוני',stations:['קורת איזון','גשר','פליק פלאק ראשון','מסלול מכשולים']},
+  {title:'פליק פלאק מתקדם',group:'קבוצה ג',duration:90,difficulty:'מאתגר',stations:['רונדאד','ערב קדמי','גלגל אחורי','כוח ידיים']},
+];
+
+function renderLessons() {
+  document.getElementById('lessonsList').innerHTML = sampleLessons.map(l=>`
+    <div class="lesson-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-weight:800;font-size:15px;">${l.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;">${l.duration} דקות · ${l.difficulty}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <span class="tag tag-sky">${l.group}</span>
+          <button class="btn btn-ghost btn-xs">✎</button>
+          <button class="btn btn-primary btn-xs">▶ הפעל</button>
+        </div>
+      </div>
+      <div>${l.stations.map(s=>`<span class="station-pill">🏋 ${s}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function addStation() {
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:8px;margin-bottom:8px;';
+  const n=document.querySelectorAll('#stationsInput>div').length+1;
+  div.innerHTML=`<input type="text" placeholder="תחנה ${n}" style="flex:1;"><input type="text" placeholder="ציוד" style="width:150px;"><input type="number" placeholder="דק'" style="width:65px;">`;
+  document.getElementById('stationsInput').appendChild(div);
+}
+
+// ===== STAFF =====
+async function addStaffRecord() {
+  const date=document.getElementById('staffDate').value;
+  const hours=parseFloat(document.getElementById('staffHours').value)||3.25;
+  const present=document.getElementById('staffPresent').value==='yes';
+  const sub=document.getElementById('staffSub').value==='yes';
+  const subName=document.getElementById('staffSubName').value;
+  const notes=document.getElementById('staffNotes').value;
+  const pay=present||sub?hours*40:0;
+  const rec={date,hours,present,sub,subName,notes,pay};
+  staffRecords.push(rec);
+  closeModal('addStaffModal');
+  renderStaff(); updateDashboard();
+  showToast('✓ נוכחות נשמרה');
+}
+
+function renderStaff() {
+  const tbody=document.getElementById('staffTable');
+  if(!tbody)return;
+  if(staffRecords.length===0){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">לחצי "+ עדכן נוכחות" להוספת שיעור</td></tr>';
+    return;
+  }
+  tbody.innerHTML=staffRecords.map(r=>`<tr>
+    <td>${r.date||'—'}</td>
+    <td>${r.hours}</td>
+    <td>${r.present?'<span class="tag tag-green">כן</span>':'<span class="tag tag-red">לא</span>'}</td>
+    <td>${r.sub?'<span class="tag tag-gold">כן</span>':'—'}</td>
+    <td>${r.subName||'—'}</td>
+    <td style="font-weight:700;">₪${r.pay}</td>
+    <td style="font-size:12px;color:var(--muted);">${r.notes||'—'}</td>
+    <td><button class="btn btn-ghost btn-xs">✕</button></td>
+  </tr>`).join('');
+}
+
+// ===== STARS =====
+function addStar() {
+  const student=document.getElementById('starStudent').value;
+  const medal=document.getElementById('starMedal').value;
+  const achieve=document.getElementById('starAchieve').value;
+  if(!student||!achieve){showToast('מלאי את כל השדות');return;}
+  stars.push({student,medal,achieve});
+  closeModal('addStarModal');
+  renderStars();
+  showToast('✓ כוכבת נוספה!');
+}
+
+function renderStars() {
+  const grid=document.getElementById('starsGrid');
+  if(stars.length===0){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:20px;"><div style="font-size:32px;margin-bottom:8px;">💫</div><div style="font-size:12px;color:var(--muted);">עוד לא הוספת כוכבות השבוע</div></div>`;
+    return;
+  }
+  grid.innerHTML=stars.map(s=>`<div class="star-card">
+    <div class="star-medal">${s.medal}</div>
+    <div class="star-name">${s.student}</div>
+    <div class="star-note" style="color:var(--crimson);">${s.achieve}</div>
+  </div>`).join('');
+}
+
+// ===== HISTORY =====
+async function saveHistory(action, details, before, after) {
+  const now=new Date();
+  const time=`${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}, ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  historyLog.unshift({time,action,details,before,after});
+  renderHistory();
+  try { await dbPost('history_log',{action,details,before_val:before,after_val:after}); } catch(e){}
+}
+
+function renderHistory() {
+  const tbody=document.getElementById('historyBody');
+  if(!tbody)return;
+  const colorMap={'תשלום':'tag-green','נוכחות':'tag-sky','תלמידה חדשה':'tag-gold','מחיקה':'tag-red'};
+  if(historyLog.length===0){
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">אין היסטוריה עדיין</td></tr>';
+    return;
+  }
+  tbody.innerHTML=historyLog.map(h=>`<tr>
+    <td style="font-size:12px;color:var(--muted);">${h.time}</td>
+    <td><span class="tag ${colorMap[h.action]||'tag-muted'}">${h.action}</span></td>
+    <td>${h.details}</td>
+    <td style="color:var(--red);font-size:12px;">${h.before||'—'}</td>
+    <td style="color:var(--green);font-size:12px;">${h.after||'—'}</td>
+  </tr>`).join('');
+}
+
+// ===== REPORTS =====
+function renderReports() { updateDashboard(); }
+
+// ===== AI =====
+async function callAI(prompt) {
+  try {
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'את עוזרת AI של חוג התעמלות קרקע בשם Fly. את מדברת עברית, מקצועית וחמה. תשובות קצרות ומעשיות.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const d=await r.json();
+    return d.content?.[0]?.text||'שגיאה, נסי שוב.';
+  } catch(e){ return 'שגיאה בחיבור ל-AI.'; }
+}
+
+async function askAI() {
+  const q=document.getElementById('aiQuestion').value.trim();
+  if(!q)return;
+  const el=document.getElementById('aiMainResponse');
+  el.textContent='חושבת... ✨'; el.className='ai-response ai-thinking';
+  const ans=await callAI(q);
+  el.textContent=ans; el.className='ai-response';
+}
+
+async function quickAsk(q) { document.getElementById('aiQuestion').value=q; await askAI(); }
+
+async function generateLessonSummary() {
+  const date=document.getElementById('lessonDate').value;
+  const group=document.getElementById('lessonGroup').value;
+  const content=document.getElementById('lessonContent').value;
+  const challenges=document.getElementById('lessonChallenges').value;
+  const el=document.getElementById('lessonSummaryResult');
+  const textEl=document.getElementById('lessonSummaryText');
+  el.style.display='block';
+  textEl.textContent='מנתחת... ✨'; textEl.className='ai-response ai-thinking';
+  const ans=await callAI(`סכמי שיעור בחוג התעמלות קרקע:\nקבוצה: ${group}\nתאריך: ${date}\nמה עשינו: ${content}\nאתגרים: ${challenges}\n\nתני: 1) ניתוח קצר 2) 3 המלצות לשיעור הבא 3) רעיונות לתחנות מותאמות`);
+  textEl.textContent=ans; textEl.className='ai-response';
+}
+
+async function generateAILesson() {
+  const el=document.getElementById('aiLessonSuggestion');
+  const textEl=document.getElementById('aiLessonText');
+  el.style.display='block';
+  textEl.textContent='מייצרת... ✨'; textEl.className='ai-response ai-thinking';
+  const ans=await callAI('הצע 5 תחנות מגוונות לשיעור התעמלות קרקע. כל תחנה: שם, ציוד, משך, תיאור קצר.');
+  textEl.textContent=ans; textEl.className='ai-response';
+}
+
+async function generateStationIdeas() {
+  const el=document.getElementById('aiStationsResult');
+  const textEl=document.getElementById('aiStationsText');
+  el.style.display='block';
+  textEl.textContent='מייצרת... ✨'; textEl.className='ai-response ai-thinking';
+  const ans=await callAI('6 רעיונות יצירתיים לתחנות בחוג התעמלות קרקע: שם, ציוד, קבוצת גיל, תיאור קצר.');
+  textEl.textContent=ans; textEl.className='ai-response';
+}
+
+async function analyzeStudent() {
+  const name=document.getElementById('progressStudent').value;
+  if(!name||name.includes('בחר'))return;
+  const el=document.getElementById('studentAnalysis');
+  el.textContent='מנתח... ✨'; el.className='ai-response ai-thinking';
+  const s=students.find(x=>(x.first+' '+x.last)===name);
+  const p=s?calcPayment(s):{};
+  const ans=await callAI(`נתחי תלמידה: ${name}, קבוצה: ${s?.group}, חיסורים: ${p.absences||0}, הערות: ${s?.notes||'אין'}. תני: נקודות חוזק, תחומים לשיפור, המלצות.`);
+  el.textContent=ans; el.className='ai-response';
+}
+
+// ===== HELPERS =====
+function populateSelects() {
+  ['starStudent','progressStudent'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML='<option>בחר תלמידה...</option>'+
+      students.map(s=>`<option>${s.first} ${s.last}</option>`).join('');
+  });
+}
+
+function populateProgressSelect() { populateSelects(); }
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id==='addPaymentModal') renderPayments();
+  const today=new Date().toISOString().split('T')[0];
+  ['payDate','staffDate','lessonDate'].forEach(fid=>{const el=document.getElementById(fid);if(el&&!el.value)el.value=today;});
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+});
+
+function switchTab(btn, tabId) {
+  const page=btn.closest('.page');
+  page.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  page.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  document.getElementById(tabId).style.display='block';
+}
+
+function exportData(){showToast('ייצוא — בקרוב! 📊');}
+function exportReport(t,n){showToast(`מייצא ${n} ל-${t.toUpperCase()}... ✓`);}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.transform='translateX(-50%) translateY(80px)';},3000);
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', async ()=>{
+  showToast('מתחבר... ⏳');
+  await loadAll();
+  await loadHist
